@@ -292,11 +292,20 @@ impl System for WindowsSystem {
                 name,
             } => {
                 let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-                let path = device_paths(class, subkey)
+                // Writes go to every matching device, so undo is only exact when they all agree.
+                let mut vals = device_paths(class, subkey)
                     .into_iter()
-                    .next()
-                    .ok_or(SysError::Unsupported)?;
-                reg_read(&hklm, &path, name).map_err(io)
+                    .map(|p| reg_read(&hklm, &p, name));
+                let first = vals.next().ok_or(SysError::Unsupported)?.map_err(io)?;
+                for v in vals {
+                    if v.map_err(io)? != first {
+                        return Err(backend_err(
+                            target,
+                            "devices of this class hold different values; change them per device in Device Manager",
+                        ));
+                    }
+                }
+                Ok(first)
             }
             Target::Service { name } => {
                 let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
