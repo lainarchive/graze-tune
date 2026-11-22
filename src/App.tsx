@@ -61,11 +61,12 @@ export default function App() {
                   badge={p.id === 'audit' ? openFindings : undefined} />
               ))}
               {moduleNav.map((g) => {
-                const open = !!openGroups[g.group]
+                const active = g.items.some((m) => screen === `module:${m.id}`)
+                const open = active || !!openGroups[g.group]
                 const worst = (['issue', 'pending', 'tuned'] as const).find((s) => g.items.some((m) => m.status === s))
                 return (
                   <div key={g.group} className="mt-3">
-                    <button onClick={() => setOpenGroups((o) => ({ ...o, [g.group]: !open }))} aria-expanded={open}
+                    <button onClick={() => !active && setOpenGroups((o) => ({ ...o, [g.group]: !open }))} aria-expanded={open}
                       className="flex w-full items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium text-muted-foreground/80 transition-colors hover:text-foreground">
                       <ChevronDown className={cn('size-3 transition-transform', !open && '-rotate-90')} />
                       <span className="flex-1 text-left">{g.group}</span>

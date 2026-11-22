@@ -140,8 +140,8 @@ export default function Overview({ go }: { go: (s: string) => void }) {
         <section className="panel p-5">
           <h2 className="font-medium">This PC</h2>
           <ul className="mt-3 space-y-2.5 text-sm">
-            {([[Cpu, sys ? `${sys.cpu}, ${sys.threads} threads` : '…'], ...(sys?.gpus ?? []).map((g) => [Gpu, g] as const), [MemoryStick, sys ? `${Math.round(sys.ram_bytes / 2 ** 30)} GB RAM` : '…'], [HardDrive, sys?.board ? `${sys.board}, BIOS ${sys.bios}` : '…'], [Network, sys?.os ?? '…'], [Power, sys?.power_plan || '…']] as const).map(([I, v]) => (
-              <li key={v} className="flex items-center gap-2.5"><I className="size-4 shrink-0 text-muted-foreground" /><span className="truncate">{v}</span></li>
+            {sys && ([[Cpu, `${sys.cpu}, ${sys.threads} threads`], ...sys.gpus.map((g) => [Gpu, g] as const), [MemoryStick, `${Math.round(sys.ram_bytes / 2 ** 30)} GB RAM`], [HardDrive, `${sys.board}, BIOS ${sys.bios}`], [Network, sys.os], [Power, sys.power_plan]] as const).map(([I, v], i) => (
+              <li key={i} className="flex items-center gap-2.5"><I className="size-4 shrink-0 text-muted-foreground" /><span className="truncate">{v}</span></li>
             ))}
           </ul>
         </section>
