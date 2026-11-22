@@ -23,9 +23,9 @@ export default function Audit() {
   const [error, setError] = useState<string | null>(null)
   const settings = useSettings()
   const [elapsed, setElapsed] = useState(0)
-  const load = useCallback(async () => {
+  const load = useCallback(async (elevated = false) => {
     const t = performance.now()
-    const r = await api.audit()
+    const r = await api.audit(elevated)
     setElapsed((performance.now() - t) / 1000)
     setReport(r)
   }, [])
@@ -64,7 +64,12 @@ export default function Audit() {
       </header>
 
       {error && <div className="rounded-lg border border-bad/30 bg-bad/5 px-4 py-2.5 text-sm text-bad">{error}</div>}
-      {!!report?.errors.length && <div className="rounded-lg border border-warn/30 bg-warn/5 px-4 py-2.5 text-sm text-warn">{report.errors.length} setting{report.errors.length === 1 ? '' : 's'} could not be read: {report.errors.slice(0, 3).join('; ')}</div>}
+      {!!report?.errors.length && (
+        <div className="flex items-center gap-3 rounded-lg border border-warn/30 bg-warn/5 px-4 py-2.5 text-sm text-warn">
+          <span className="min-w-0 flex-1">{report.errors.length} setting{report.errors.length === 1 ? '' : 's'} could not be read: {report.errors.slice(0, 3).join('; ')}</span>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => { setError(null); load(true).catch((e) => setError(String(e))) }}>Check as admin</Button>
+        </div>
+      )}
 
       <section className="panel grid grid-cols-[auto_1fr] gap-8 p-5">
         <div className="pr-8 border-r">

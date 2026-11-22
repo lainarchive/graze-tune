@@ -68,8 +68,11 @@ fn catalog(core: State<'_>) -> Catalog {
 }
 
 #[tauri::command]
-async fn run_audit(core: State<'_>) -> Res<AuditReport> {
-    blocking(&core, |c| {
+async fn run_audit(core: State<'_>, elevated: Option<bool>) -> Res<AuditReport> {
+    blocking(&core, move |c| {
+        if elevated == Some(true) {
+            return privileged(c, Op::Audit);
+        }
         let log = c.log.lock().map_err(|e| e.to_string())?;
         Ok(audit::run(&c.sys, &c.catalog, |t| log.owner(t).is_some()))
     })
@@ -104,9 +107,15 @@ enum Op {
         id: u64,
     },
     RevertAll,
+    Audit,
 }
 
-fn exec_op(sys: &dyn System, log: &mut UndoLog, op: Op) -> Res<serde_json::Value> {
+fn exec_op(
+    sys: &dyn System,
+    catalog: &Catalog,
+    log: &mut UndoLog,
+    op: Op,
+) -> Res<serde_json::Value> {
     let e = |e: graze_engine::undo::UndoError| e.to_string();
     let out = match op {
         Op::Apply {
@@ -126,6 +135,7 @@ fn exec_op(sys: &dyn System, log: &mut UndoLog, op: Op) -> Res<serde_json::Value
         }
         Op::Revert { id } => serde_json::to_value(log.revert(sys, id).map_err(e)?),
         Op::RevertAll => serde_json::to_value(log.revert_all(sys).map_err(e)?),
+        Op::Audit => serde_json::to_value(audit::run(sys, catalog, |t| log.owner(t).is_some())),
     };
     out.map_err(|e| e.to_string())
 }
@@ -136,7 +146,7 @@ fn privileged<T: serde::de::DeserializeOwned>(core: &Core, op: Op) -> Res<T> {
     let mut log = core.log.lock().map_err(|e| e.to_string())?;
     #[cfg(windows)]
     let out = if graze_engine::windows::is_elevated() {
-        exec_op(&core.sys, &mut log, op)
+        exec_op(&core.sys, &core.catalog, &mut log, op)
     } else {
         let path = log.path().to_path_buf();
         let out = elevated::run(&path, &op);
@@ -144,34 +154,47 @@ fn privileged<T: serde::de::DeserializeOwned>(core: &Core, op: Op) -> Res<T> {
         out
     };
     #[cfg(not(windows))]
-    let out = exec_op(&core.sys, &mut log, op);
+    let out = exec_op(&core.sys, &core.catalog, &mut log, op);
     serde_json::from_value(out?).map_err(|e| e.to_string())
+}
+
+fn to_hex(b: &[u8]) -> String {
+    b.iter().map(|x| format!("{x:02x}")).collect()
+}
+
+fn from_hex(s: &str) -> Option<Vec<u8>> {
+    if !s.len().is_multiple_of(2) {
+        return None;
+    }
+    (0..s.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(s.get(i..i + 2)?, 16).ok())
+        .collect()
 }
 
 #[cfg(windows)]
 mod elevated {
-    use super::{Op, Res};
+    use super::{to_hex, Op, Res};
     use std::os::windows::process::CommandExt;
     use std::path::Path;
     use std::process::Command;
 
     /// Runs `op` in `graze-tune.exe --worker` through a UAC prompt and returns its result.
+    /// The request rides on the command line so nothing can swap it while the prompt is open.
+    // shortcut: a batch over ~16 KB of JSON exceeds the command-line limit; move to a pipe if that happens.
     pub fn run(log: &Path, op: &Op) -> Res<serde_json::Value> {
         let s = |e: std::io::Error| e.to_string();
         let dir = log.parent().ok_or("undo log has no folder")?;
         std::fs::create_dir_all(dir).map_err(s)?;
-        let req = dir.join("worker-request.json");
         let resp = dir.join("worker-response.json");
-        let body = serde_json::to_vec(&(log, op)).map_err(|e| e.to_string())?;
-        std::fs::write(&req, body).map_err(s)?;
         let _ = std::fs::remove_file(&resp);
+        let req = to_hex(&serde_json::to_vec(&(log, op)).map_err(|e| e.to_string())?);
         let exe = std::env::current_exe().map_err(s)?;
         // PowerShell single-quoted literal holding a double-quoted path, so spaces survive.
         let q = |p: &Path| format!("'\"{}\"'", p.display().to_string().replace('\'', "''"));
         let script = format!(
-            "Start-Process -FilePath {} -ArgumentList '--worker',{},{} -Verb RunAs -Wait",
+            "Start-Process -FilePath {} -ArgumentList '--worker','{req}',{} -Verb RunAs -Wait",
             q(&exe),
-            q(&req),
             q(&resp)
         );
         let out = Command::new("powershell")
@@ -179,7 +202,6 @@ mod elevated {
             .creation_flags(0x0800_0000)
             .output()
             .map_err(s)?;
-        let _ = std::fs::remove_file(&req);
         if !out.status.success() {
             return Err("Admin permission was not granted, so nothing was changed.".into());
         }
@@ -189,21 +211,44 @@ mod elevated {
     }
 }
 
-/// Entry point for `graze-tune.exe --worker <request> <response>`; returns the exit code.
+/// Entry point for `graze-tune.exe --worker <hex request> <response path>`; returns the exit code.
 pub fn worker(args: &[String]) -> i32 {
+    use std::io::Write;
     let [req, resp] = args else {
         return 2;
     };
     let result = (|| -> Res<serde_json::Value> {
-        let text = std::fs::read(req).map_err(|e| e.to_string())?;
+        let text = from_hex(req).ok_or("malformed worker request")?;
         let (path, op): (std::path::PathBuf, Op) =
             serde_json::from_slice(&text).map_err(|e| e.to_string())?;
         let mut log = UndoLog::open(path).map_err(|e| e.to_string())?;
-        exec_op(&Platform::default(), &mut log, op)
+        let catalog = Catalog::builtin().map_err(|e| e.to_string())?;
+        exec_op(&Platform::default(), &catalog, &mut log, op)
     })();
-    match serde_json::to_vec(&result).map(|b| std::fs::write(resp, b)) {
-        Ok(Ok(())) => 0,
-        _ => 1,
+    // create_new: never write through a link someone planted at the response path.
+    let _ = std::fs::remove_file(resp);
+    let written = serde_json::to_vec(&result)
+        .map_err(std::io::Error::other)
+        .and_then(|b| {
+            std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(resp)?
+                .write_all(&b)
+        });
+    i32::from(written.is_err())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{from_hex, to_hex};
+
+    #[test]
+    fn hex_roundtrip() {
+        let b = br#"{"op":"RevertAll"}"#.to_vec();
+        assert_eq!(from_hex(&to_hex(&b)), Some(b));
+        assert_eq!(from_hex("abc"), None);
+        assert_eq!(from_hex("zz"), None);
     }
 }
 

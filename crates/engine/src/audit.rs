@@ -1,7 +1,7 @@
 use crate::{AuditRule, Catalog, System, Target, Value, Verdict};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Finding {
     pub id: String,
     pub title: String,
@@ -16,7 +16,7 @@ pub struct Finding {
     pub ours: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditReport {
     pub checked: usize,
     pub findings: Vec<Finding>,
