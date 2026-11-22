@@ -52,9 +52,20 @@ changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\Current
 id = "mem.edge-background"
 module = "Memory"
 title = "Keep Edge closed when it's closed"
-why = "Edge preloads at sign-in and keeps running after its window closes, holding hundreds of MB. Off by policy; Edge opens a little slower."
+why = "Edge preloads at sign-in, prerenders the new tab page and keeps running after its window closes, holding hundreds of MB. Off by policy; Edge opens a little slower."
 risk = "safe"
 changes = [
   { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Edge', name = "StartupBoostEnabled" }, value = 0, default = "not set" },
   { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Edge', name = "BackgroundModeEnabled" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Edge', name = "NewTabPagePrerenderEnabled" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "mem.chrome-background"
+module = "Memory"
+title = "Keep Chrome closed when it's closed"
+why = "Chrome keeps running in the tray after its last window closes so extensions and apps can run. Off by policy frees that memory."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Google\Chrome', name = "BackgroundModeEnabled" }, value = 0, default = "not set" },
 ]

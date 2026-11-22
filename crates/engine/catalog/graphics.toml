@@ -138,10 +138,10 @@ changes = [{ target = { kind = "nvidia", setting = 0x50166C5E }, value = 0, defa
 id = "nvhw.dynamic-pstate"
 module = "NVIDIA hardware"
 title = "Lock the GPU in its top performance state"
-why = "Stops the card clocking down between frames, which can cause stutter in light or CPU-bound games. Idle power and heat go up."
+why = "Stops the card clocking down between frames, which can cause stutter in light or CPU-bound games. NVIDIA and AMD drivers both read it. Idle power and heat go up."
 risk = "caution"
 restart = true
-changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000', name = "DisableDynamicPstate" }, value = 1, default = "not set" }]
+changes = [{ target = { kind = "device_registry", class = "display", subkey = "", name = "DisableDynamicPstate" }, value = 1, default = "not set" }]
 
 [[tweak]]
 id = "display.tdr-delay"
@@ -151,3 +151,104 @@ why = "Windows resets the display driver if the GPU is busy for 2 seconds, which
 risk = "caution"
 restart = true
 changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\GraphicsDrivers', name = "TdrDelay" }, value = 8, default = "not set" }]
+
+[[tweak]]
+id = "nvhw.async-pstates"
+module = "NVIDIA hardware"
+title = "Disable asynchronous P-state changes"
+why = "Stops the driver switching memory and core clocks independently mid-frame, which some cards turn into frame-time spikes. Idle power goes up."
+risk = "caution"
+restart = true
+changes = [
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "DisableASyncPstates" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "nv.ansel-off"
+module = "NVIDIA profile"
+title = "Disable Ansel"
+why = "Stops the driver injecting the Ansel photo-mode hooks into supported games. Ansel and its hotkey stop working."
+risk = "safe"
+changes = [
+  { target = { kind = "nvidia", setting = 0x1075543A }, value = 0, default = 1 },
+]
+
+[[tweak]]
+id = "gpu.amd-ulps"
+module = "GPU drivers"
+title = "AMD: disable ultra-low power state"
+why = "ULPS powers the GPU almost fully down at idle, and waking from it can cause flicker, black screens or a slow first frame. Idle power goes up slightly. Only AMD drivers read this."
+risk = "safe"
+restart = true
+changes = [
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "EnableULPS" }, value = 0, default = 1 },
+]
+
+[[tweak]]
+id = "gpu.amd-power-gating"
+module = "GPU drivers"
+title = "AMD: disable GPU power gating"
+why = "Keeps parts of the AMD GPU powered instead of switching them off between loads, which removes wake-up latency. Idle power and heat go up."
+risk = "caution"
+restart = true
+changes = [
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "DisablePowerGating" }, value = 1, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "PP_GPUPowerDownEnabled" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "gpu.amd-video-clock-gating"
+module = "GPU drivers"
+title = "AMD: keep video engines clocked"
+why = "Stops the AMD encoder and decoder blocks gating their clocks, which can stutter recording, streaming or video playback while gaming. Idle power goes up."
+risk = "caution"
+restart = true
+changes = [
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "DisableVCEPowerGating" }, value = 1, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "DisableVceClockGating" }, value = 1, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "EnableUvdClockGating" }, value = 0, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "EnableVceSwClockGating" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "gpu.amd-aspm"
+module = "GPU drivers"
+title = "AMD: no PCIe link power saving"
+why = "Turns off the L0s and L1 PCIe power states in the AMD driver so the link never sleeps between frames."
+risk = "safe"
+restart = true
+changes = [
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "EnableAspmL0s" }, value = 0, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "EnableAspmL1" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "gpu.intel-adaptive-vsync"
+module = "GPU drivers"
+title = "Intel: disable adaptive V-Sync"
+why = "Intel graphics can switch V-Sync on and off by itself depending on frame rate. Off leaves sync to the game's own setting."
+risk = "safe"
+restart = true
+changes = [
+  { target = { kind = "device_registry", class = "display", subkey = "", name = "AdaptiveVsyncEnable" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "display.adaptive-brightness"
+module = "Display path"
+title = "No adaptive brightness on AC"
+why = "Stops Windows changing screen brightness from the light sensor while plugged in, so the picture doesn't shift mid-game."
+risk = "safe"
+changes = [
+  { target = { kind = "power", subgroup = "SUB_VIDEO", setting = "ADAPTBRIGHT" }, value = 0, default = 1 },
+]
+
+[[tweak]]
+id = "display.wallpaper-quality"
+module = "Display path"
+title = "Full-quality wallpaper"
+why = "Windows recompresses JPEG wallpapers to 85% quality, which shows as banding on large or high-res monitors. Takes effect the next time a wallpaper is set."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Desktop', name = "JPEGImportQuality" }, value = 100, default = "not set" },
+]

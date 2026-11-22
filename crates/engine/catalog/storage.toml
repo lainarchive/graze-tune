@@ -54,3 +54,34 @@ why = "Frees hiberfil.sys, which takes several GB of the system drive. Hibernate
 risk = "safe"
 restart = true
 changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Power', name = "HibernateEnabled" }, value = 0, default = 1 }]
+
+[[tweak]]
+id = "storage.ntfs-memory"
+module = "Storage"
+title = "More memory for the NTFS cache"
+why = "Raises the paged pool NTFS may use for its metadata cache, which helps games that open many small files. Uses a little more RAM."
+risk = "safe"
+restart = true
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\FileSystem', name = "NtfsMemoryUsage" }, value = 2, default = "not set" },
+]
+
+[[tweak]]
+id = "storage.folder-type-discovery"
+module = "Storage"
+title = "Stop Explorer guessing folder types"
+why = "Explorer scans a folder's files to pick a music, photo or video layout, which makes big folders slow to open. Every folder uses the general layout instead."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell', name = "FolderType" }, value = "NotSpecified", default = "not set" },
+]
+
+[[tweak]]
+id = "storage.small-crash-dumps"
+module = "Storage"
+title = "Small crash dumps only"
+why = "After a blue screen Windows writes a small minidump instead of a kernel dump that can take several GB and a long reboot. The minidump still names the faulting driver."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\CrashControl', name = "CrashDumpEnabled" }, value = 3, default = 7 },
+]

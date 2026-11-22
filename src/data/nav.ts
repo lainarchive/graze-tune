@@ -24,6 +24,7 @@ export const moduleNav: { group: string; items: NavEntry[] }[] = [
   { group: 'Graphics', items: [
     { id: 'NVIDIA profile', label: 'NVIDIA profile', icon: SlidersHorizontal, hint: 'Driver profile settings per game', status: 'issue' },
     { id: 'NVIDIA hardware', label: 'NVIDIA hardware', icon: Layers2, hint: 'MSI, P-state, PCIe power, telemetry', status: 'tuned' },
+    { id: 'GPU drivers', label: 'AMD & Intel GPU', icon: CircuitBoard, hint: 'ULPS, power gating, PCIe power', status: 'pending' },
     { id: 'Display path', label: 'Display path', icon: Monitor, hint: 'Refresh, VRR, MPO, flip model', status: 'issue' },
   ] },
   { group: 'Input & network', items: [

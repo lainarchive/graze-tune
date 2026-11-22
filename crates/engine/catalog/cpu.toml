@@ -109,11 +109,15 @@ changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Micro
 id = "cpu.low-priority-indexer"
 module = "CPU & scheduler"
 title = "Search indexer at low CPU and disk priority"
-why = "SearchIndexer.exe starts at below-normal CPU and low I/O priority, so indexing yields to the game instead of competing with it."
+why = "SearchIndexer.exe and its helper processes start at below-normal CPU and low I/O priority, so indexing yields to the game instead of competing with it."
 risk = "safe"
 changes = [
   { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SearchIndexer.exe\PerfOptions', name = "CpuPriorityClass" }, value = 5, default = "not set" },
   { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SearchIndexer.exe\PerfOptions', name = "IoPriority" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SearchProtocolHost.exe\PerfOptions', name = "CpuPriorityClass" }, value = 5, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SearchProtocolHost.exe\PerfOptions', name = "IoPriority" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SearchFilterHost.exe\PerfOptions', name = "CpuPriorityClass" }, value = 5, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SearchFilterHost.exe\PerfOptions', name = "IoPriority" }, value = 1, default = "not set" },
 ]
 
 [[tweak]]
@@ -125,4 +129,50 @@ risk = "safe"
 changes = [
   { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe\PerfOptions', name = "CpuPriorityClass" }, value = 1, default = "not set" },
   { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe\PerfOptions', name = "IoPriority" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "cpu.low-priority-update-workers"
+module = "CPU & scheduler"
+title = "Windows Update workers at low priority"
+why = "TiWorker.exe and MoUsoCoreWorker.exe install and scan for updates in the background. Below-normal CPU and low I/O priority keep them from stealing frame time; updates take a little longer."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\TiWorker.exe\PerfOptions', name = "CpuPriorityClass" }, value = 5, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\TiWorker.exe\PerfOptions', name = "IoPriority" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\MoUsoCoreWorker.exe\PerfOptions', name = "CpuPriorityClass" }, value = 5, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\MoUsoCoreWorker.exe\PerfOptions', name = "IoPriority" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "cpu.low-priority-onedrive"
+module = "CPU & scheduler"
+title = "OneDrive sync at low priority"
+why = "OneDrive hashing and syncing runs at below-normal CPU and low I/O priority, so a big sync doesn't hitch a game. Sync is slower while the PC is busy."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\OneDrive.exe\PerfOptions', name = "CpuPriorityClass" }, value = 5, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\OneDrive.exe\PerfOptions', name = "IoPriority" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "cpu.low-priority-gamebar-presence"
+module = "CPU & scheduler"
+title = "Game Bar presence writer at idle priority"
+why = "GameBarPresenceWriter.exe starts whenever a game launches, to post what you're playing. Idle priority keeps it off the cores the game uses."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\GameBarPresenceWriter.exe\PerfOptions', name = "CpuPriorityClass" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\GameBarPresenceWriter.exe\PerfOptions', name = "IoPriority" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "cpu.low-priority-phone-link"
+module = "CPU & scheduler"
+title = "Phone Link at idle priority"
+why = "PhoneExperienceHost.exe runs all the time to sync phone notifications and photos. Idle CPU and very low I/O priority keep it out of the way."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\PhoneExperienceHost.exe\PerfOptions', name = "CpuPriorityClass" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\PhoneExperienceHost.exe\PerfOptions', name = "IoPriority" }, value = 0, default = "not set" },
 ]

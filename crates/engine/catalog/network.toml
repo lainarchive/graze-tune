@@ -113,3 +113,57 @@ title = "Disable LLMNR name broadcasts"
 why = "Stops Windows multicasting name lookups to the local network when DNS fails, which adds lookup delay and is a known spoofing target."
 risk = "safe"
 changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows NT\DNSClient', name = "EnableMulticast" }, value = 0, default = "not set" }]
+
+[[tweak]]
+id = "net.nic-rsc"
+module = "Network"
+title = "Disable Receive Segment Coalescing"
+why = "RSC merges incoming packets before handing them to Windows, which saves CPU on downloads but can hold back small game packets. Off delivers each one as it arrives."
+risk = "safe"
+changes = [
+  { target = { kind = "device_registry", class = "net", subkey = "", name = "*RscIPv4" }, value = "0", default = "1" },
+  { target = { kind = "device_registry", class = "net", subkey = "", name = "*RscIPv6" }, value = "0", default = "1" },
+]
+
+[[tweak]]
+id = "net.tcp-time-wait"
+module = "Network"
+title = "Release closed TCP ports faster"
+why = "Closed connections hold their port for 2 to 4 minutes. 30 seconds frees them sooner for launchers and browsers that open many connections."
+risk = "safe"
+restart = true
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Services\Tcpip\Parameters', name = "TcpTimedWaitDelay" }, value = 30, default = "not set" },
+]
+
+[[tweak]]
+id = "net.smb-throttling"
+module = "Network"
+title = "No SMB bandwidth throttling"
+why = "Stops Windows holding back file copies to and from network shares on fast Ethernet links."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters', name = "DisableBandwidthThrottling" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "net.ipv6-transition"
+module = "Network"
+title = "Disable 6to4 and ISATAP tunnels"
+why = "Turns off two retired IPv6 tunnel types that Windows still sets up and probes. Native IPv6 and Teredo, which Xbox party chat uses, are left alone."
+risk = "safe"
+restart = true
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\TCPIP\v6Transition', name = "6to4_State" }, value = "Disabled", default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\TCPIP\v6Transition', name = "ISATAP_State" }, value = "Disabled", default = "not set" },
+]
+
+[[tweak]]
+id = "net.remote-assistance"
+module = "Network"
+title = "Turn off Remote Assistance"
+why = "Stops Windows accepting Remote Assistance invitations, so nobody can be invited to view or control the PC. Quick Assist is separate and still works."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Remote Assistance', name = "fAllowToGetHelp" }, value = 0, default = 1 },
+]
