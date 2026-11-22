@@ -19,6 +19,7 @@ export function usePcHealth(key?: unknown) {
   useEffect(() => {
     api.auditCached().then((r) => setFindings(r.findings)).catch(() => setFindings([]))
   }, [key])
-  const health = useMemo(() => (findings ? pcHealth(findings, moduleOf, lastFrames()) : null), [findings])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- key re-reads the last frame capture
+  const health = useMemo(() => (findings ? pcHealth(findings, moduleOf, lastFrames()) : null), [findings, key])
   return { findings: findings ?? [], health }
 }
