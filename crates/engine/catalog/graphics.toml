@@ -125,3 +125,29 @@ title = "Keep fullscreen optimizations on"
 why = "Disabling FSO globally is a common placebo tweak; with FSO games get independent flip anyway."
 risk = "safe"
 changes = [{ target = { kind = "registry", hive = "HKCU", path = 'System\GameConfigStore', name = "GameDVR_FSEBehaviorMode" }, value = 0, default = 0 }]
+
+[[tweak]]
+id = "nv.cuda-p2-off"
+module = "NVIDIA profile"
+title = "CUDA: don't force P2 state"
+why = "The driver drops memory clocks to P2 whenever a CUDA app runs (video upscalers, encoders, some overlays). Off lets the card stay at full P0 clocks."
+risk = "safe"
+changes = [{ target = { kind = "nvidia", setting = 0x50166C5E }, value = 0, default = 1 }]
+
+[[tweak]]
+id = "nvhw.dynamic-pstate"
+module = "NVIDIA hardware"
+title = "Lock the GPU in its top performance state"
+why = "Stops the card clocking down between frames, which can cause stutter in light or CPU-bound games. Idle power and heat go up."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000', name = "DisableDynamicPstate" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "display.tdr-delay"
+module = "Display path"
+title = "Longer GPU timeout before driver reset"
+why = "Windows resets the display driver if the GPU is busy for 2 seconds, which heavy shader compiles can trip. 8 seconds avoids false resets; a real hang takes longer to recover."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\GraphicsDrivers', name = "TdrDelay" }, value = 8, default = "not set" }]

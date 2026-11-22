@@ -53,3 +53,63 @@ title = "Disable smart multi-homed name resolution"
 why = "Windows otherwise sends each DNS query out every adapter at once, which can bypass a VPN or a chosen DNS server."
 risk = "safe"
 changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows NT\DNSClient', name = "DisableSmartNameResolution" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "net.nic-lso"
+module = "Network"
+title = "Disable Large Send Offload"
+why = "LSO batches outgoing data into big chunks for the adapter to split, which can delay small game packets behind bulk uploads. Costs a little CPU."
+risk = "safe"
+changes = [
+  { target = { kind = "device_registry", class = "net", subkey = "", name = "*LsoV2IPv4" }, value = "0", default = "1" },
+  { target = { kind = "device_registry", class = "net", subkey = "", name = "*LsoV2IPv6" }, value = "0", default = "1" },
+]
+
+[[tweak]]
+id = "net.nic-power-saving"
+module = "Network"
+title = "Don't let Windows power off the adapter"
+why = "Clears 'Allow the computer to turn off this device to save power', which can drop or slow the link after idle."
+risk = "safe"
+restart = true
+changes = [{ target = { kind = "device_registry", class = "net", subkey = "", name = "PnPCapabilities" }, value = 24, default = "not set" }]
+
+[[tweak]]
+id = "net.nic-wake"
+module = "Network"
+title = "Ethernet: no wake on LAN"
+why = "Stops network traffic waking the PC from sleep. Remote wake-up tools stop working."
+risk = "safe"
+changes = [
+  { target = { kind = "device_registry", class = "net", subkey = "", name = "*WakeOnMagicPacket" }, value = "0", default = "1" },
+  { target = { kind = "device_registry", class = "net", subkey = "", name = "*WakeOnPattern" }, value = "0", default = "1" },
+]
+
+[[tweak]]
+id = "net.realtek-green"
+module = "Network"
+title = "Realtek Ethernet: power saving off"
+why = "Turns off Green Ethernet, Power Saving Mode and GigaLite on Realtek adapters, which can drop the link speed or add wake-up delay. No effect on other brands."
+risk = "safe"
+changes = [
+  { target = { kind = "device_registry", class = "net", subkey = "", name = "EnableGreenEthernet" }, value = "0", default = "1" },
+  { target = { kind = "device_registry", class = "net", subkey = "", name = "PowerSavingMode" }, value = "0", default = "1" },
+  { target = { kind = "device_registry", class = "net", subkey = "", name = "GigaLite" }, value = "0", default = "1" },
+]
+
+[[tweak]]
+id = "net.dns-negative-cache"
+module = "Network"
+title = "Don't cache failed DNS lookups"
+why = "After a network blip Windows remembers failed lookups for up to 15 minutes, so a game or launcher can't reconnect. Off retries at once."
+risk = "safe"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Services\Dnscache\Parameters', name = "MaxNegativeCacheTtl" }, value = 0, default = "not set" }]
+
+[[tweak]]
+id = "net.llmnr"
+module = "Network"
+title = "Disable LLMNR name broadcasts"
+why = "Stops Windows multicasting name lookups to the local network when DNS fails, which adds lookup delay and is a known spoofing target."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows NT\DNSClient', name = "EnableMulticast" }, value = 0, default = "not set" }]

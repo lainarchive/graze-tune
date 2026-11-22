@@ -37,3 +37,20 @@ title = "AHCI link power: active"
 why = "Keeps the SATA link out of partial/slumber states."
 risk = "safe"
 changes = [{ target = { kind = "power", subgroup = "SUB_DISK", setting = "0b2d69d7-a2a1-449c-9680-f91c70521c60" }, value = 0, default = 3 }]
+
+[[tweak]]
+id = "storage.nvme-idle"
+module = "Storage"
+title = "NVMe: no idle power states on AC"
+why = "Stops the NVMe drive dropping into low-power states after 200 ms idle, so the first read after a pause doesn't wait for it to wake. The drive runs a little warmer."
+risk = "safe"
+changes = [{ target = { kind = "power", subgroup = "0012ee47-9041-4b5d-9b77-535fba8b1442", setting = "d639518a-e56d-4345-8af2-b9f32fb26109" }, value = 0, default = 200 }]
+
+[[tweak]]
+id = "storage.hibernation"
+module = "Storage"
+title = "Turn off hibernation"
+why = "Frees hiberfil.sys, which takes several GB of the system drive. Hibernate and Fast Startup stop working."
+risk = "safe"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Power', name = "HibernateEnabled" }, value = 0, default = 1 }]

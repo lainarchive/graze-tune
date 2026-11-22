@@ -95,3 +95,33 @@ changes = [
   { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile', name = "NoLazyMode" }, value = 1, default = "not set" },
   { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile', name = "AlwaysOn" }, value = 1, default = "not set" },
 ]
+
+[[tweak]]
+id = "cpu.fault-tolerant-heap"
+module = "CPU & scheduler"
+title = "Disable Fault Tolerant Heap"
+why = "After a program crashes a few times, Windows can silently attach a slower crash-proof heap to it. Off keeps games on the normal heap."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\FTH', name = "Enabled" }, value = 0, default = 1 }]
+
+[[tweak]]
+id = "cpu.low-priority-indexer"
+module = "CPU & scheduler"
+title = "Search indexer at low CPU and disk priority"
+why = "SearchIndexer.exe starts at below-normal CPU and low I/O priority, so indexing yields to the game instead of competing with it."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SearchIndexer.exe\PerfOptions', name = "CpuPriorityClass" }, value = 5, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SearchIndexer.exe\PerfOptions', name = "IoPriority" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "cpu.low-priority-compat-telemetry"
+module = "CPU & scheduler"
+title = "Compatibility telemetry at idle priority"
+why = "CompatTelRunner.exe can pin a core and hammer the disk for minutes. Idle CPU and very low I/O priority keep it out of the way."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe\PerfOptions', name = "CpuPriorityClass" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe\PerfOptions', name = "IoPriority" }, value = 0, default = "not set" },
+]

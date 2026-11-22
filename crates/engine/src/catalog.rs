@@ -139,7 +139,7 @@ mod tests {
             Ok(c) => c,
             Err(e) => panic!("{e}"),
         };
-        assert!(c.tweaks.len() >= 110, "only {} tweaks", c.tweaks.len());
+        assert!(c.tweaks.len() >= 130, "only {} tweaks", c.tweaks.len());
         let mut seen = HashSet::new();
         for t in &c.tweaks {
             assert!(seen.insert(t.id.clone()), "duplicate tweak id {}", t.id);
