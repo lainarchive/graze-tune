@@ -21,10 +21,13 @@ pub enum Target {
     },
     /// Registry value under every present PCI device of a class, e.g. MSI mode on the GPU.
     /// `class` is "display", "net", "usb" or "audio"; `subkey` is relative to `Device Parameters`.
+    /// `vendor` (PCI vendor id, e.g. "1002" for AMD) limits it to that vendor's devices.
     DeviceRegistry {
         class: String,
         subkey: String,
         name: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        vendor: Option<String>,
     },
     /// Service start type (2 auto, 3 manual, 4 disabled).
     Service { name: String },
@@ -49,7 +52,17 @@ impl fmt::Display for Target {
                 class,
                 subkey,
                 name,
-            } => write!(f, "{class} devices\\Device Parameters\\{subkey}\\{name}"),
+                vendor,
+            } => {
+                let vendor = vendor
+                    .as_deref()
+                    .map(|v| format!(" (vendor {v})"))
+                    .unwrap_or_default();
+                write!(
+                    f,
+                    "{class} devices{vendor}\\Device Parameters\\{subkey}\\{name}"
+                )
+            }
             Target::Service { name } => write!(f, "service {name} start type"),
             Target::Bcd { element } => write!(f, "bcdedit {{current}} {element}"),
             Target::Power { subgroup, setting } => write!(f, "powercfg {subgroup} {setting}"),

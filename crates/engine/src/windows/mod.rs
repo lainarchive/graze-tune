@@ -124,7 +124,7 @@ fn class_guid(class: &str) -> Option<&'static str> {
 
 /// Registry paths (under HKLM) for every physical PCI device of `class`. With an empty `subkey`
 /// this is the driver key, where NIC advanced properties live; otherwise `Device Parameters\subkey`.
-fn device_paths(class: &str, subkey: &str) -> Vec<String> {
+fn device_paths(class: &str, subkey: &str, vendor: Option<&str>) -> Vec<String> {
     let Some(guid) = class_guid(class) else {
         return vec![];
     };
@@ -133,7 +133,14 @@ fn device_paths(class: &str, subkey: &str) -> Vec<String> {
         return vec![];
     };
     let mut out = vec![];
+    let ven = vendor.map(|v| format!("VEN_{}&", v.to_ascii_uppercase()));
     for dev in pci.enum_keys().flatten() {
+        if ven
+            .as_ref()
+            .is_some_and(|v| !dev.to_ascii_uppercase().starts_with(v))
+        {
+            continue;
+        }
         let Ok(dk) = pci.open_subkey(&dev) else {
             continue;
         };
@@ -303,10 +310,11 @@ impl System for WindowsSystem {
                 class,
                 subkey,
                 name,
+                vendor,
             } => {
                 let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
                 // Writes go to every matching device, so undo is only exact when they all agree.
-                let mut vals = device_paths(class, subkey)
+                let mut vals = device_paths(class, subkey, vendor.as_deref())
                     .into_iter()
                     .map(|p| reg_read(&hklm, &p, name));
                 let first = vals.next().ok_or(SysError::Unsupported)?.map_err(io)?;
@@ -350,9 +358,10 @@ impl System for WindowsSystem {
                 class,
                 subkey,
                 name,
+                vendor,
             } => {
                 let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-                let paths = device_paths(class, subkey);
+                let paths = device_paths(class, subkey, vendor.as_deref());
                 if paths.is_empty() {
                     return Err(SysError::Unsupported);
                 }

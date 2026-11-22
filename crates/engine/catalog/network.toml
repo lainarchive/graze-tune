@@ -92,9 +92,9 @@ title = "Realtek Ethernet: power saving off"
 why = "Turns off Green Ethernet, Power Saving Mode and GigaLite on Realtek adapters, which can drop the link speed or add wake-up delay. No effect on other brands."
 risk = "safe"
 changes = [
-  { target = { kind = "device_registry", class = "net", subkey = "", name = "EnableGreenEthernet" }, value = "0", default = "1" },
-  { target = { kind = "device_registry", class = "net", subkey = "", name = "PowerSavingMode" }, value = "0", default = "1" },
-  { target = { kind = "device_registry", class = "net", subkey = "", name = "GigaLite" }, value = "0", default = "1" },
+  { target = { kind = "device_registry", class = "net", subkey = "", vendor = "10EC", name = "EnableGreenEthernet" }, value = "0", default = "1" },
+  { target = { kind = "device_registry", class = "net", subkey = "", vendor = "10EC", name = "PowerSavingMode" }, value = "0", default = "1" },
+  { target = { kind = "device_registry", class = "net", subkey = "", vendor = "10EC", name = "GigaLite" }, value = "0", default = "1" },
 ]
 
 [[tweak]]

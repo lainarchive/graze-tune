@@ -181,7 +181,7 @@ why = "ULPS powers the GPU almost fully down at idle, and waking from it can cau
 risk = "safe"
 restart = true
 changes = [
-  { target = { kind = "device_registry", class = "display", subkey = "", name = "EnableULPS" }, value = 0, default = 1 },
+  { target = { kind = "device_registry", class = "display", subkey = "", vendor = "1002", name = "EnableULPS" }, value = 0, default = 1 },
 ]
 
 [[tweak]]
@@ -192,8 +192,8 @@ why = "Keeps parts of the AMD GPU powered instead of switching them off between 
 risk = "caution"
 restart = true
 changes = [
-  { target = { kind = "device_registry", class = "display", subkey = "", name = "DisablePowerGating" }, value = 1, default = "not set" },
-  { target = { kind = "device_registry", class = "display", subkey = "", name = "PP_GPUPowerDownEnabled" }, value = 0, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", vendor = "1002", name = "DisablePowerGating" }, value = 1, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", vendor = "1002", name = "PP_GPUPowerDownEnabled" }, value = 0, default = "not set" },
 ]
 
 [[tweak]]
@@ -204,10 +204,10 @@ why = "Stops the AMD encoder and decoder blocks gating their clocks, which can s
 risk = "caution"
 restart = true
 changes = [
-  { target = { kind = "device_registry", class = "display", subkey = "", name = "DisableVCEPowerGating" }, value = 1, default = "not set" },
-  { target = { kind = "device_registry", class = "display", subkey = "", name = "DisableVceClockGating" }, value = 1, default = "not set" },
-  { target = { kind = "device_registry", class = "display", subkey = "", name = "EnableUvdClockGating" }, value = 0, default = "not set" },
-  { target = { kind = "device_registry", class = "display", subkey = "", name = "EnableVceSwClockGating" }, value = 0, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", vendor = "1002", name = "DisableVCEPowerGating" }, value = 1, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", vendor = "1002", name = "DisableVceClockGating" }, value = 1, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", vendor = "1002", name = "EnableUvdClockGating" }, value = 0, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", vendor = "1002", name = "EnableVceSwClockGating" }, value = 0, default = "not set" },
 ]
 
 [[tweak]]
@@ -218,8 +218,8 @@ why = "Turns off the L0s and L1 PCIe power states in the AMD driver so the link 
 risk = "safe"
 restart = true
 changes = [
-  { target = { kind = "device_registry", class = "display", subkey = "", name = "EnableAspmL0s" }, value = 0, default = "not set" },
-  { target = { kind = "device_registry", class = "display", subkey = "", name = "EnableAspmL1" }, value = 0, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", vendor = "1002", name = "EnableAspmL0s" }, value = 0, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", vendor = "1002", name = "EnableAspmL1" }, value = 0, default = "not set" },
 ]
 
 [[tweak]]
@@ -230,7 +230,7 @@ why = "Intel graphics can switch V-Sync on and off by itself depending on frame 
 risk = "safe"
 restart = true
 changes = [
-  { target = { kind = "device_registry", class = "display", subkey = "", name = "AdaptiveVsyncEnable" }, value = 0, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = "", vendor = "8086", name = "AdaptiveVsyncEnable" }, value = 0, default = "not set" },
 ]
 
 [[tweak]]
