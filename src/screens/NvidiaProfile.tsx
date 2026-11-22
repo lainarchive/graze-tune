@@ -88,9 +88,11 @@ export default function NvidiaProfile() {
   const pick = (r: Row, val: string) => {
     if (val === DEFAULT) return stage(r.ids.map((id) => [id, missing]))
     const op = r.opts[Number(val)]
-    stage(r.ids.map((id) => {
+    // IDs the option does not set are cleared only if another option of this row put them there.
+    const ours = (id: number) => r.opts.some((x) => x.set.some(([i, v]) => i === id && sameValue(effective(id), dword(v))))
+    stage(r.ids.flatMap((id): [number, Value][] => {
       const hit = op.set.find(([i]) => i === id)
-      return [id, hit ? dword(hit[1]) : missing]
+      return hit ? [[id, dword(hit[1])]] : ours(id) ? [[id, missing]] : []
     }))
   }
   const changes = [...staged].filter(([id, v]) => !sameValue(v, byId.get(id)?.user_set ? byId.get(id)!.value : missing))
@@ -113,7 +115,8 @@ export default function NvidiaProfile() {
     if (typeof path !== 'string') return
     try {
       const plan = await api.nipRead(path)
-      await apply(`Import ${path.split(/[\\/]/).pop()}`, plan)
+      for (const [name, exes] of plan.apps) for (const e of exes) await api.nvAddApp(name, e)
+      await apply(`Import ${path.split(/[\\/]/).pop()}`, plan.changes)
     } catch (e) {
       setMsg({ tone: 'bad', text: String(e) })
     }
