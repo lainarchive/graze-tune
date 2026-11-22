@@ -85,11 +85,126 @@ async fn read_values(core: State<'_>, targets: Vec<Target>) -> Res<Vec<Option<Va
     .await
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct ChangeIn {
     target: Target,
     value: Value,
     tweak: Option<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "op")]
+enum Op {
+    Apply {
+        label: String,
+        changes: Vec<ChangeIn>,
+        restore_point: bool,
+    },
+    Revert {
+        id: u64,
+    },
+    RevertAll,
+}
+
+fn exec_op(sys: &dyn System, log: &mut UndoLog, op: Op) -> Res<serde_json::Value> {
+    let e = |e: graze_engine::undo::UndoError| e.to_string();
+    let out = match op {
+        Op::Apply {
+            label,
+            changes,
+            restore_point,
+        } => {
+            let plan = changes
+                .into_iter()
+                .map(|ch| Planned {
+                    target: ch.target,
+                    value: ch.value,
+                    tweak: ch.tweak,
+                })
+                .collect();
+            serde_json::to_value(log.apply(sys, &label, plan, restore_point).map_err(e)?)
+        }
+        Op::Revert { id } => serde_json::to_value(log.revert(sys, id).map_err(e)?),
+        Op::RevertAll => serde_json::to_value(log.revert_all(sys).map_err(e)?),
+    };
+    out.map_err(|e| e.to_string())
+}
+
+/// Writes need admin, but WebView2 can't open an elevated window without explorer.exe (it
+/// de-elevates through it), so the UI runs as the user and each batch runs in an elevated copy.
+fn privileged<T: serde::de::DeserializeOwned>(core: &Core, op: Op) -> Res<T> {
+    let mut log = core.log.lock().map_err(|e| e.to_string())?;
+    #[cfg(windows)]
+    let out = if graze_engine::windows::is_elevated() {
+        exec_op(&core.sys, &mut log, op)
+    } else {
+        let path = log.path().to_path_buf();
+        let out = elevated::run(&path, &op);
+        *log = UndoLog::open(path).map_err(|e| e.to_string())?;
+        out
+    };
+    #[cfg(not(windows))]
+    let out = exec_op(&core.sys, &mut log, op);
+    serde_json::from_value(out?).map_err(|e| e.to_string())
+}
+
+#[cfg(windows)]
+mod elevated {
+    use super::{Op, Res};
+    use std::os::windows::process::CommandExt;
+    use std::path::Path;
+    use std::process::Command;
+
+    /// Runs `op` in `graze-tune.exe --worker` through a UAC prompt and returns its result.
+    pub fn run(log: &Path, op: &Op) -> Res<serde_json::Value> {
+        let s = |e: std::io::Error| e.to_string();
+        let dir = log.parent().ok_or("undo log has no folder")?;
+        std::fs::create_dir_all(dir).map_err(s)?;
+        let req = dir.join("worker-request.json");
+        let resp = dir.join("worker-response.json");
+        let body = serde_json::to_vec(&(log, op)).map_err(|e| e.to_string())?;
+        std::fs::write(&req, body).map_err(s)?;
+        let _ = std::fs::remove_file(&resp);
+        let exe = std::env::current_exe().map_err(s)?;
+        // PowerShell single-quoted literal holding a double-quoted path, so spaces survive.
+        let q = |p: &Path| format!("'\"{}\"'", p.display().to_string().replace('\'', "''"));
+        let script = format!(
+            "Start-Process -FilePath {} -ArgumentList '--worker',{},{} -Verb RunAs -Wait",
+            q(&exe),
+            q(&req),
+            q(&resp)
+        );
+        let out = Command::new("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+            .creation_flags(0x0800_0000)
+            .output()
+            .map_err(s)?;
+        let _ = std::fs::remove_file(&req);
+        if !out.status.success() {
+            return Err("Admin permission was not granted, so nothing was changed.".into());
+        }
+        let text = std::fs::read(&resp).map_err(|_| "The admin helper exited without a result.")?;
+        let _ = std::fs::remove_file(&resp);
+        serde_json::from_slice::<Res<serde_json::Value>>(&text).map_err(|e| e.to_string())?
+    }
+}
+
+/// Entry point for `graze-tune.exe --worker <request> <response>`; returns the exit code.
+pub fn worker(args: &[String]) -> i32 {
+    let [req, resp] = args else {
+        return 2;
+    };
+    let result = (|| -> Res<serde_json::Value> {
+        let text = std::fs::read(req).map_err(|e| e.to_string())?;
+        let (path, op): (std::path::PathBuf, Op) =
+            serde_json::from_slice(&text).map_err(|e| e.to_string())?;
+        let mut log = UndoLog::open(path).map_err(|e| e.to_string())?;
+        exec_op(&Platform::default(), &mut log, op)
+    })();
+    match serde_json::to_vec(&result).map(|b| std::fs::write(resp, b)) {
+        Ok(Ok(())) => 0,
+        _ => 1,
+    }
 }
 
 #[tauri::command]
@@ -100,15 +215,14 @@ async fn apply(
     restore_point: bool,
 ) -> Res<Batch> {
     blocking(&core, move |c| {
-        let plan = changes
-            .into_iter()
-            .map(|ch| Planned {
-                target: ch.target,
-                value: ch.value,
-                tweak: ch.tweak,
-            })
-            .collect();
-        with_log(c, |log| log.apply(&c.sys, &label, plan, restore_point))
+        privileged(
+            c,
+            Op::Apply {
+                label,
+                changes,
+                restore_point,
+            },
+        )
     })
     .await
 }
@@ -120,12 +234,12 @@ async fn history(core: State<'_>) -> Res<Vec<Batch>> {
 
 #[tauri::command]
 async fn revert(core: State<'_>, id: u64) -> Res<Vec<String>> {
-    blocking(&core, move |c| with_log(c, |log| log.revert(&c.sys, id))).await
+    blocking(&core, move |c| privileged(c, Op::Revert { id })).await
 }
 
 #[tauri::command]
 async fn revert_all(core: State<'_>) -> Res<Vec<String>> {
-    blocking(&core, |c| with_log(c, |log| log.revert_all(&c.sys))).await
+    blocking(&core, |c| privileged(c, Op::RevertAll)).await
 }
 
 #[cfg(windows)]

@@ -13,6 +13,13 @@ use winreg::{RegKey, RegValue};
 const NO_WINDOW: u32 = 0x0800_0000;
 const ENUM_PCI: &str = r"SYSTEM\CurrentControlSet\Enum\PCI";
 
+/// True when this process runs as admin (can write HKLM).
+pub fn is_elevated() -> bool {
+    RegKey::predef(HKEY_LOCAL_MACHINE)
+        .open_subkey_with_flags("SOFTWARE", KEY_WRITE)
+        .is_ok()
+}
+
 pub struct WindowsSystem {
     nv: Mutex<Option<nvapi::Nvapi>>,
 }
@@ -153,6 +160,12 @@ fn device_paths(class: &str, subkey: &str) -> Vec<String> {
 }
 
 fn bcd_read(target: &Target, element: &str) -> SysResult<Value> {
+    if !is_elevated() {
+        return Err(backend_err(
+            target,
+            "boot settings can only be read as admin",
+        ));
+    }
     let out = run(target, "bcdedit", &["/enum", "{current}"])?;
     Ok(out
         .lines()
