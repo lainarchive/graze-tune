@@ -42,6 +42,8 @@ pub enum UndoError {
     Sys(#[from] crate::SysError),
     #[error("no batch {0}")]
     NoBatch(u64),
+    #[error("batch {0} has values changed again by a newer batch; revert that one first")]
+    Superseded(u64),
 }
 
 /// Write-ahead undo log. Old values are saved to disk before anything is written, so a crash
@@ -139,11 +141,19 @@ impl UndoLog {
         }
         let batch = &mut self.batches[idx];
         if let Some(msg) = failure {
-            for e in batch.entries[..done].iter().rev() {
-                let _ = sys.write(&e.target, &e.old);
+            let stuck: Vec<String> = batch.entries[..done]
+                .iter()
+                .rev()
+                .filter_map(|e| sys.write(&e.target, &e.old).err().map(|e| e.to_string()))
+                .collect();
+            if stuck.is_empty() {
+                batch.state = BatchState::Failed;
+                batch.error = Some(msg);
+            } else {
+                // Leave it revertible: some new values are still live.
+                batch.state = BatchState::Pending;
+                batch.error = Some(format!("{msg}; rollback failed: {}", stuck.join("; ")));
             }
-            batch.state = BatchState::Failed;
-            batch.error = Some(msg);
         } else {
             batch.state = BatchState::Applied;
         }
@@ -154,14 +164,27 @@ impl UndoLog {
 
     /// Puts back the old values of one batch, newest write first. Returns targets that failed.
     pub fn revert(&mut self, sys: &dyn System, id: u64) -> Result<Vec<String>, UndoError> {
-        let batch = self
+        let pos = self
             .batches
-            .iter_mut()
-            .find(|b| b.id == id)
+            .iter()
+            .position(|b| b.id == id)
             .ok_or(UndoError::NoBatch(id))?;
-        if batch.state == BatchState::Reverted {
+        if self.batches[pos].state == BatchState::Reverted {
             return Ok(vec![]);
         }
+        let newer: std::collections::HashSet<&Target> = self.batches[pos + 1..]
+            .iter()
+            .filter(|b| matches!(b.state, BatchState::Applied | BatchState::Pending))
+            .flat_map(|b| b.entries.iter().map(|e| &e.target))
+            .collect();
+        if self.batches[pos]
+            .entries
+            .iter()
+            .any(|e| newer.contains(&e.target))
+        {
+            return Err(UndoError::Superseded(id));
+        }
+        let batch = &mut self.batches[pos];
         let failed: Vec<String> = batch
             .entries
             .iter()
@@ -192,7 +215,11 @@ impl UndoLog {
             .collect();
         let mut failed = vec![];
         for id in ids {
-            failed.extend(self.revert(sys, id)?);
+            match self.revert(sys, id) {
+                Ok(f) => failed.extend(f),
+                Err(e @ UndoError::Superseded(_)) => failed.push(e.to_string()),
+                Err(e) => return Err(e),
+            }
         }
         Ok(failed)
     }
@@ -282,6 +309,21 @@ mod tests {
         let mut log = UndoLog::open(tmp("skip"))?;
         let b = log.apply(&sys, "noop", vec![plan("a", 2)], false)?;
         assert!(b.entries.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn older_batch_cannot_clobber_newer_one() -> Result<(), UndoError> {
+        let sys = MemorySystem::default();
+        let mut log = UndoLog::open(tmp("superseded"))?;
+        let a = log.apply(&sys, "a", vec![plan("a", 1)], false)?;
+        log.apply(&sys, "b", vec![plan("a", 2)], false)?;
+        assert!(matches!(
+            log.revert(&sys, a.id),
+            Err(UndoError::Superseded(_))
+        ));
+        assert!(log.revert_all(&sys)?.is_empty());
+        assert_eq!(sys.read(&reg("a"))?, Value::Missing);
         Ok(())
     }
 }
