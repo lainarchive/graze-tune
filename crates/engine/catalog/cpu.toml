@@ -102,6 +102,7 @@ module = "CPU & scheduler"
 title = "Disable Fault Tolerant Heap"
 why = "After a program crashes a few times, Windows can silently attach a slower crash-proof heap to it. Off keeps games on the normal heap."
 risk = "safe"
+restart = true
 changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\FTH', name = "Enabled" }, value = 0, default = 1 }]
 
 [[tweak]]
