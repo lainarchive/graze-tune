@@ -179,7 +179,11 @@ const changed = <T>(p: Promise<T>) => { auditCache = null; return p }
 
 export const api = {
   systemInfo: () => call<SystemInfo>('system_info'),
-  audit: (elevated = false) => call<AuditReport>('run_audit', { elevated }),
+  audit: (elevated = false) => {
+    const r = call<AuditReport>('run_audit', { elevated })
+    if (!elevated) auditCache = r.catch((e) => { auditCache = null; throw e })
+    return r
+  },
   /** Shared unelevated audit for the dashboard; dropped whenever a change is applied or reverted. */
   auditCached: () => (auditCache ??= call<AuditReport>('run_audit', { elevated: false }).catch((e) => { auditCache = null; throw e })),
   read: (targets: Target[]) => call<(Value | null)[]>('read_values', { targets }),
