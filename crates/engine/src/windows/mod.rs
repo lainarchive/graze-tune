@@ -305,20 +305,26 @@ impl System for WindowsSystem {
                 name,
             } => {
                 let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-                // Writes go to every matching device, so undo is only exact when they all agree.
                 let mut vals = device_paths(class, subkey)
-                    .into_iter()
-                    .map(|p| reg_read(&hklm, &p, name));
-                let first = vals.next().ok_or(SysError::Unsupported)?.map_err(io)?;
-                for v in vals {
-                    if v.map_err(io)? != first {
-                        return Err(backend_err(
-                            target,
-                            "devices of this class hold different values; change them per device in Device Manager",
-                        ));
-                    }
+                    .iter()
+                    .map(|p| reg_read(&hklm, p, name))
+                    .collect::<std::io::Result<Vec<_>>>()
+                    .map_err(io)?;
+                if vals.is_empty() {
+                    return Err(SysError::Unsupported);
                 }
-                Ok(first)
+                // Vendor-specific values (AMD ULPS, Realtek Green Ethernet) exist only on
+                // that vendor's device; devices without the value don't count.
+                vals.retain(|v| *v != Value::Missing);
+                // Writes go to every device holding the value, so undo is only exact when they agree.
+                match vals.split_first() {
+                    None => Ok(Value::Missing),
+                    Some((first, rest)) if rest.iter().all(|v| v == first) => Ok(first.clone()),
+                    Some(_) => Err(backend_err(
+                        target,
+                        "devices of this class hold different values; change them per device in Device Manager",
+                    )),
+                }
             }
             Target::Service { name } => {
                 let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
@@ -356,8 +362,18 @@ impl System for WindowsSystem {
                 if paths.is_empty() {
                     return Err(SysError::Unsupported);
                 }
-                paths
+                let held: Vec<_> = paths
                     .iter()
+                    .filter(|p| !matches!(reg_read(&hklm, p, name), Ok(Value::Missing)))
+                    .collect();
+                // Keep vendor-specific values on the devices that have them; a new value goes everywhere.
+                let paths = if held.is_empty() {
+                    paths.iter().collect()
+                } else {
+                    held
+                };
+                paths
+                    .into_iter()
                     .try_for_each(|p| reg_write(&hklm, p, name, value))
                     .map_err(io)
             }
