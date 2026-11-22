@@ -13,7 +13,7 @@
     "windows": [
       { "title": "graze-tune", "width": 1360, "height": 860, "minWidth": 1100, "minHeight": 700, "decorations": false, "center": true }
     ],
-    "security": { "csp": null }
+    "security": { "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src ipc: http://ipc.localhost" }
   },
   "bundle": {
     "active": true,
