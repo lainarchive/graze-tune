@@ -29,3 +29,43 @@ title = "Disable boot and app prefetcher"
 why = "Avoids prefetch reads competing with game asset streaming on SATA SSDs."
 risk = "safe"
 changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters', name = "EnablePrefetcher" }, value = 0, default = 3 }]
+
+[[tweak]]
+id = "mem.ndu"
+module = "Memory"
+title = "Disable network data usage monitor"
+why = "The Ndu driver counts traffic per app and is a known source of non-paged pool leaks on some network drivers. Settings stops showing data usage per app."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Services\Ndu', name = "Start" }, value = 4, default = 2 }]
+
+[[tweak]]
+id = "mem.page-combining"
+module = "Memory"
+title = "Disable memory page combining"
+why = "Windows periodically scans RAM for identical pages to merge, which costs CPU time. With enough RAM the saving is not worth the scans."
+risk = "safe"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management', name = "DisablePagingCombining" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "mem.edge-background"
+module = "Memory"
+title = "Keep Edge closed when it's closed"
+why = "Edge preloads at sign-in, prerenders the new tab page and keeps running after its window closes, holding hundreds of MB. Off by policy; Edge opens a little slower."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Edge', name = "StartupBoostEnabled" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Edge', name = "BackgroundModeEnabled" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Edge', name = "NewTabPagePrerenderEnabled" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "mem.chrome-background"
+module = "Memory"
+title = "Keep Chrome closed when it's closed"
+why = "Chrome keeps running in the tray after its last window closes so extensions and apps can run. Off by policy frees that memory."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Google\Chrome', name = "BackgroundModeEnabled" }, value = 0, default = "not set" },
+]

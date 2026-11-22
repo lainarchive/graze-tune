@@ -115,3 +115,232 @@ title = "Fast shutdown of hung apps"
 why = "Closes apps that hang at shutdown instead of waiting."
 risk = "safe"
 changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Desktop', name = "AutoEndTasks" }, value = "1", default = "not set" }]
+
+[[tweak]]
+id = "win.visual-effects"
+module = "Windows UI"
+title = "Cut taskbar and desktop animations"
+why = "Turns off taskbar animations, icon label shadows and Aero Peek, so DWM has less to draw over a borderless game."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced', name = "TaskbarAnimations" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced', name = "ListviewShadow" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\DWM', name = "EnableAeroPeek" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "win.start-web-search"
+module = "Windows UI"
+title = "Local-only Start search"
+why = "Start search stops sending every keystroke to Bing and shows only apps, files and settings, which also makes it faster."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Policies\Microsoft\Windows\Explorer', name = "DisableSearchBoxSuggestions" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Search', name = "BingSearchEnabled" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\Windows Search', name = "ConnectedSearchUseWeb" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "win.start-recommendations"
+module = "Windows UI"
+title = "No promoted items in Start"
+why = "Hides app and tip promotions from the Recommended section of Start."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced', name = "Start_IrisRecommendations" }, value = 0, default = "not set" }]
+
+[[tweak]]
+id = "win.widgets"
+module = "Windows UI"
+title = "Turn off Widgets"
+why = "The Widgets board keeps a WebView process alive and refreshes news and weather in the background."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Dsh', name = "AllowNewsAndInterests" }, value = 0, default = "not set" }]
+
+[[tweak]]
+id = "win.end-task"
+module = "Windows UI"
+title = "End task in the taskbar menu"
+why = "Adds End task to a taskbar button's right-click menu, so a frozen game can be killed without Task Manager."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings', name = "TaskbarEndTask" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "bg.ceip-tasks"
+module = "Background"
+title = "Disable Customer Experience tasks"
+why = "The CEIP consolidator and USB reporting tasks collect and upload usage data on a schedule."
+risk = "safe"
+changes = [
+  { target = { kind = "task", path = '\Microsoft\Windows\Customer Experience Improvement Program\Consolidator' }, value = 0, default = 1 },
+  { target = { kind = "task", path = '\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip' }, value = 0, default = 1 },
+]
+
+[[tweak]]
+id = "bg.app-experience-tasks"
+module = "Background"
+title = "Disable app compatibility scan tasks"
+why = "PcaPatchDbTask, MareBackup and StartupAppTask scan installed programs in the background and can spike disk and CPU."
+risk = "safe"
+changes = [
+  { target = { kind = "task", path = '\Microsoft\Windows\Application Experience\PcaPatchDbTask' }, value = 0, default = 1 },
+  { target = { kind = "task", path = '\Microsoft\Windows\Application Experience\MareBackup' }, value = 0, default = 1 },
+  { target = { kind = "task", path = '\Microsoft\Windows\Application Experience\StartupAppTask' }, value = 0, default = 1 },
+]
+
+[[tweak]]
+id = "bg.feedback-tasks"
+module = "Background"
+title = "Disable feedback data tasks"
+why = "The Feedback Hub DmClient tasks gather diagnostics for feedback scenarios on a timer."
+risk = "safe"
+changes = [
+  { target = { kind = "task", path = '\Microsoft\Windows\Feedback\Siuf\DmClient' }, value = 0, default = 1 },
+  { target = { kind = "task", path = '\Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload' }, value = 0, default = 1 },
+]
+
+[[tweak]]
+id = "bg.error-reporting"
+module = "Background"
+title = "Turn off Windows Error Reporting"
+why = "Crashes are no longer packaged and uploaded, which can take seconds of disk and CPU after a game crash. Crash dumps for your own debugging are lost too."
+risk = "caution"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows\Windows Error Reporting', name = "Disabled" }, value = 1, default = "not set" },
+  { target = { kind = "task", path = '\Microsoft\Windows\Windows Error Reporting\QueueReporting' }, value = 0, default = 1 },
+]
+
+[[tweak]]
+id = "bg.disk-diagnostic"
+module = "Background"
+title = "Disable disk diagnostic data collector"
+why = "Stops the scheduled task that gathers disk health data for Microsoft. SMART warnings still show."
+risk = "safe"
+changes = [{ target = { kind = "task", path = '\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector' }, value = 0, default = 1 }]
+
+[[tweak]]
+id = "bg.autologgers"
+module = "Background"
+title = "Stop diagnostic trace sessions at boot"
+why = "These ETW trace sessions log telemetry and diagnostics from boot onward. Network and diagnostic troubleshooters lose their history."
+risk = "caution"
+restart = true
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\WMI\Autologger\Diagtrack-Listener', name = "Start" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\WMI\Autologger\SQMLogger', name = "Start" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\WMI\Autologger\DiagLog', name = "Start" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\WMI\Autologger\WdiContextLog', name = "Start" }, value = 0, default = 1 },
+]
+
+[[tweak]]
+id = "bg.dmwappush"
+module = "Background"
+title = "Disable WAP push message routing"
+why = "dmwappushservice only routes device-management push messages, which a home PC never gets. Leave it on if work or school manages this PC."
+risk = "caution"
+changes = [{ target = { kind = "service", name = "dmwappushservice" }, value = 4, default = 3 }]
+
+[[tweak]]
+id = "svc.maps-broker"
+module = "Services"
+title = "Downloaded Maps Manager on demand"
+why = "Only the Maps app needs it."
+risk = "safe"
+changes = [{ target = { kind = "service", name = "MapsBroker" }, value = 3, default = 2 }]
+
+[[tweak]]
+id = "svc.trkwks"
+module = "Services"
+title = "Distributed Link Tracking on demand"
+why = "Tracks shortcuts to files that move between NTFS volumes on a network domain; a home PC has no use for it running all the time."
+risk = "safe"
+changes = [{ target = { kind = "service", name = "TrkWks" }, value = 3, default = 2 }]
+
+[[tweak]]
+id = "svc.pcasvc"
+module = "Services"
+title = "Program Compatibility Assistant on demand"
+why = "Watches every program you start for compatibility problems."
+risk = "safe"
+changes = [{ target = { kind = "service", name = "PcaSvc" }, value = 3, default = 2 }]
+
+[[tweak]]
+id = "svc.cdp"
+module = "Services"
+title = "Connected Devices Platform on demand"
+why = "Runs Phone Link, Nearby sharing and cross-device sync. Starts when those features ask, so they can feel slower to connect."
+risk = "caution"
+changes = [{ target = { kind = "service", name = "CDPSvc" }, value = 3, default = 2 }]
+
+[[tweak]]
+id = "svc.spooler"
+module = "Services"
+title = "Print Spooler on demand"
+why = "Saves a background service on PCs that never print. If printing stops working, turn this back off."
+risk = "caution"
+changes = [{ target = { kind = "service", name = "Spooler" }, value = 3, default = 2 }]
+
+[[tweak]]
+id = "svc.alljoyn"
+module = "Services"
+title = "Disable AllJoyn Router"
+why = "AllJoyn is a retired smart-home protocol."
+risk = "safe"
+changes = [{ target = { kind = "service", name = "AJRouter" }, value = 4, default = 3 }]
+
+[[tweak]]
+id = "svc.retail-demo"
+module = "Services"
+title = "Disable Retail Demo"
+why = "Only used by store display PCs."
+risk = "safe"
+changes = [{ target = { kind = "service", name = "RetailDemo" }, value = 4, default = 3 }]
+
+[[tweak]]
+id = "svc.fax"
+module = "Services"
+title = "Disable Fax"
+why = "Nobody on a gaming PC sends faxes."
+risk = "safe"
+changes = [{ target = { kind = "service", name = "Fax" }, value = 4, default = 3 }]
+
+[[tweak]]
+id = "reg.fast-startup"
+module = "Registry"
+title = "Disable Fast Startup"
+why = "Fast Startup resumes the kernel and drivers from a hibernation file, so driver and timer changes only take effect after a real restart. Off gives a clean start every boot."
+risk = "safe"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Session Manager\Power', name = "HiberbootEnabled" }, value = 0, default = 1 }]
+
+[[tweak]]
+id = "win.hover-delay"
+module = "Windows UI"
+title = "Instant hover tooltips and previews"
+why = "Cuts the hover delay before tooltips from 400 ms to 10 ms and shows taskbar thumbnails at once. Takes effect after signing out."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Mouse', name = "MouseHoverTime" }, value = "10", default = "400" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced', name = "ExtendedUIHoverTime" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "reg.hung-app-timeout"
+module = "Registry"
+title = "Shorter waits on hung apps and shutdown"
+why = "Windows waits 2 seconds instead of 5 to 20 before treating an app or service as hung, so a frozen game or a shutdown clears faster."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Desktop', name = "HungAppTimeout" }, value = "2000", default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Desktop', name = "WaitToKillAppTimeout" }, value = "2000", default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control', name = "WaitToKillServiceTimeout" }, value = "2000", default = "5000" },
+]
+
+[[tweak]]
+id = "win.min-animate"
+module = "Windows UI"
+title = "Instant minimize and maximize"
+why = "Windows appear and minimize at once instead of playing the zoom animation, which also makes alt-tabbing out of a game feel quicker."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Desktop\WindowMetrics', name = "MinAnimate" }, value = "0", default = "1" },
+]

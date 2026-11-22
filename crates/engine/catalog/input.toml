@@ -36,3 +36,32 @@ changes = [
   { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Accessibility\StickyKeys', name = "Flags" }, value = "506", default = "510" },
   { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Accessibility\Keyboard Response', name = "Flags" }, value = "122", default = "126" },
 ]
+
+[[tweak]]
+id = "input.keyboard-repeat"
+module = "Input"
+title = "Shortest key repeat delay"
+why = "Held keys start repeating after the shortest delay, at the fastest rate."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Keyboard', name = "KeyboardDelay" }, value = "0", default = "1" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Keyboard', name = "KeyboardSpeed" }, value = "31", default = "31" },
+]
+
+[[tweak]]
+id = "input.toggle-keys"
+module = "Input"
+title = "Disable toggle keys shortcut"
+why = "Holding Num Lock for five seconds no longer opens the Toggle Keys prompt mid-game."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Accessibility\ToggleKeys', name = "Flags" }, value = "58", default = "62" }]
+
+[[tweak]]
+id = "input.touchpad-no-delay"
+module = "Input"
+title = "Touchpad works while typing"
+why = "Removes the delay Windows adds before the touchpad responds after a key press, so you can aim with the touchpad while holding WASD. Palms can move the cursor."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\PrecisionTouchPad', name = "AAPThreshold" }, value = 0, default = 2 },
+]

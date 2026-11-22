@@ -10,7 +10,7 @@ export type Value =
 
 export type Target =
   | { kind: 'registry'; hive: 'HKLM' | 'HKCU'; path: string; name: string }
-  | { kind: 'device_registry'; class: string; subkey: string; name: string }
+  | { kind: 'device_registry'; class: string; subkey: string; name: string; vendor?: string }
   | { kind: 'service'; name: string }
   | { kind: 'bcd'; element: string }
   | { kind: 'power'; subgroup: string; setting: string }

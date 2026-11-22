@@ -1,0 +1,180 @@
+# Settings picked with OptimizerDuck (https://github.com/itsfatduck/optimizerDuck) as a reference.
+
+[[tweak]]
+id = "priv.recall"
+module = "Privacy"
+title = "Turn off Recall snapshots"
+why = "Recall screenshots the desktop every few seconds and runs on-device analysis on them, which costs disk writes and NPU/CPU time during play. Windows deletes saved snapshots when this applies, and reverting does not bring them back."
+risk = "caution"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\WindowsAI', name = "DisableAIDataAnalysis" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\WindowsAI', name = "AllowRecallEnablement" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Policies\Microsoft\Windows\WindowsAI', name = "DisableAIDataAnalysis" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "priv.click-to-do"
+module = "Privacy"
+title = "Turn off Click to Do"
+why = "Click to Do reads whatever is on screen to suggest actions. Off by policy for this PC and this user."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\WindowsAI', name = "DisableClickToDo" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Policies\Microsoft\Windows\WindowsAI', name = "DisableClickToDo" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "priv.copilot"
+module = "Privacy"
+title = "Turn off Windows Copilot"
+why = "Removes the Copilot sidebar and its taskbar button. The Copilot app from the Store is not touched."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot', name = "TurnOffWindowsCopilot" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Policies\Microsoft\Windows\WindowsCopilot', name = "TurnOffWindowsCopilot" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced', name = "ShowCopilotButton" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "priv.advertising-id"
+module = "Privacy"
+title = "Turn off the advertising ID"
+why = "Apps can no longer read a per-user ID to target ads across apps."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo', name = "DisabledByGroupPolicy" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "priv.tailored-experiences"
+module = "Privacy"
+title = "No tips based on diagnostic data"
+why = "Stops Windows using your diagnostic data to pick tips, ads and recommendations."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Privacy', name = "TailoredExperiencesWithDiagnosticDataEnabled" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Policies\Microsoft\Windows\CloudContent', name = "DisableTailoredExperiencesWithDiagnosticData" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "priv.silent-app-installs"
+module = "Privacy"
+title = "Stop promoted apps installing themselves"
+why = "Windows quietly installs sponsored Store apps and games after updates. This stops new ones; apps already installed stay."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager', name = "SilentInstalledAppsEnabled" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager', name = "PreInstalledAppsEnabled" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager', name = "OemPreInstalledAppsEnabled" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\CloudContent', name = "DisableWindowsConsumerFeatures" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "priv.suggestions"
+module = "Privacy"
+title = "Hide tips and suggestions"
+why = "Turns off suggested content in Settings and Start, 'get even more out of Windows' tips and the lock screen facts."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager', name = "SubscribedContent-338387Enabled" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager', name = "SubscribedContent-338388Enabled" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager', name = "SubscribedContent-338389Enabled" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager', name = "SubscribedContent-353698Enabled" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager', name = "SystemPaneSuggestionsEnabled" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\CloudContent', name = "DisableSoftLanding" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "priv.account-nags"
+module = "Privacy"
+title = "No Microsoft account and setup nags"
+why = "Removes the Microsoft 365 and account banners in Settings and the 'finish setting up your PC' screen after updates."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\CloudContent', name = "DisableConsumerAccountStateContent" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement', name = "ScoobeSystemSettingEnabled" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "priv.activity-history"
+module = "Privacy"
+title = "Turn off activity history"
+why = "Stops Windows recording which apps and files you open and uploading that history."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\System', name = "EnableActivityFeed" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\System', name = "PublishUserActivities" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\System', name = "UploadUserActivities" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "priv.location"
+module = "Privacy"
+title = "Turn off location services"
+why = "No app can read your location. Automatic time zone, Weather and Find My Device stop working."
+risk = "caution"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors', name = "DisableLocation" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "priv.maps-updates"
+module = "Privacy"
+title = "No automatic offline map downloads"
+why = "Stops the Maps task downloading map updates in the background."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\Maps', name = "AutoUpdateEnabled" }, value = 0, default = "not set" },
+  { target = { kind = "task", path = '\Microsoft\Windows\Maps\MapsUpdateTask' }, value = 0, default = 1 },
+]
+
+[[tweak]]
+id = "priv.typing-data"
+module = "Privacy"
+title = "Stop collecting typing and inking data"
+why = "Windows otherwise builds a personal dictionary from what you type and write and can read your contacts for it."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\InputPersonalization', name = "RestrictImplicitTextCollection" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\InputPersonalization', name = "RestrictImplicitInkCollection" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\InputPersonalization\TrainedDataStore', name = "HarvestContacts" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "priv.online-speech"
+module = "Privacy"
+title = "Turn off online speech recognition"
+why = "Voice input stops going to Microsoft's cloud service. Voice typing falls back to the offline engine where one is installed."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Speech_OneCore\Settings\OnlineSpeechPrivacy', name = "HasAccepted" }, value = 0, default = "not set" }]
+
+[[tweak]]
+id = "priv.feedback-prompts"
+module = "Privacy"
+title = "No feedback prompts"
+why = "Stops 'how likely are you to recommend Windows' pop-ups, which can steal focus from a game."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Siuf\Rules', name = "NumberOfSIUFInPeriod" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\DataCollection', name = "DoNotShowFeedbackNotifications" }, value = 1, default = "not set" },
+]
+
+[[tweak]]
+id = "priv.app-launch-tracking"
+module = "Privacy"
+title = "Stop tracking app launches"
+why = "Windows stops counting which apps you start. Start loses its 'most used' list."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced', name = "Start_TrackProgs" }, value = 0, default = "not set" }]
+
+[[tweak]]
+id = "priv.device-name"
+module = "Privacy"
+title = "Keep the PC name out of diagnostics"
+why = "Diagnostic data is sent without this PC's name."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\DataCollection', name = "AllowDeviceNameInTelemetry" }, value = 0, default = "not set" }]
+
+[[tweak]]
+id = "priv.language-list"
+module = "Privacy"
+title = "Hide your language list from websites"
+why = "Websites can no longer read the list of languages installed on this PC."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Control Panel\International\User Profile', name = "HttpAcceptLanguageOptOut" }, value = 1, default = "not set" }]
