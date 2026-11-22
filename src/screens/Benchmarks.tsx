@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { lastFramesKey } from '@/lib/health'
 import { api, type FrameStats, type PingStats, type Timer } from '@/lib/api'
 import { useSettings } from '@/lib/settings'
 
@@ -26,6 +27,7 @@ export default function Benchmarks() {
   }
   const capture = () => guard('frames', async () => {
     const r = await api.frames(process, settings.benchSeconds)
+    localStorage.setItem(lastFramesKey, JSON.stringify(r.stats))
     setRuns((o) => (o.baseline ? { ...o, latest: r } : { baseline: r }))
   })
   const network = () => guard('ping', async () => {

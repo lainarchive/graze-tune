@@ -120,16 +120,6 @@ export function stats(s: { ms: number }[]) {
 
 export const net = { before: { ping: 38, jitter: 9.4, bloat: 61 }, after: { ping: 34, jitter: 2.1, bloat: 12 } }
 
-export const health = {
-  score: 64,
-  parts: [
-    { label: 'Frame pacing', value: 58 },
-    { label: 'Input path', value: 81 },
-    { label: 'Network', value: 72 },
-    { label: 'System hygiene', value: 41 },
-  ],
-}
-
 export const nextSteps = [
   { title: 'Reset 3 harmful leftovers', detail: 'HPET clock, LargeSystemCache, disabled TRIM', gain: '−31% p99 frametime', go: 'audit' },
   { title: 'Detach the MuMuPlayer display adapter', detail: 'Keeps DWM composition on the RTX 3050', gain: 'Independent flip', go: 'module:Display path' },
