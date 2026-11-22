@@ -36,7 +36,8 @@ pub fn run(sys: &dyn System, catalog: &Catalog, ours: impl Fn(&Target) -> bool) 
         }
         checked += 1;
         match sys.read(&rule.target) {
-            Ok(current) if current != rule.default => findings.push(Finding {
+            // Missing means Windows uses its built-in default, so it is never a leftover.
+            Ok(current) if current != rule.default && current != Value::Missing => findings.push(Finding {
                 id: rule.id.clone(),
                 title: rule.title.clone(),
                 location: rule.target.to_string(),

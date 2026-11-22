@@ -96,7 +96,7 @@ const mockAudit = (): AuditReport => {
     if (seen.has(key(target))) return
     seen.add(key(target))
     const current = mockRead(target)
-    if (!sameValue(current, def)) findings.push({ id, title, target, location: fmtTarget(target), current, windows_default: def, verdict, sources, why, ours: mockBatches.some((b) => b.state === 'applied' && b.entries.some((e) => key(e.target) === key(target))) })
+    if (current.type !== 'missing' && !sameValue(current, def)) findings.push({ id, title, target, location: fmtTarget(target), current, windows_default: def, verdict, sources, why, ours: mockBatches.some((b) => b.state === 'applied' && b.entries.some((e) => key(e.target) === key(target))) })
   }
   for (const r of rules) check(r.id, r.title, r.target, r.default, r.verdict, r.sources, r.why)
   for (const t of catalog.tweak) for (const c of t.changes) check(`${t.id}:${fmtTarget(c.target)}`, t.title, c.target, c.default, t.risk === 'opt-in' ? 'risk' : 'keep', [], t.why)
