@@ -1,0 +1,107 @@
+[[audit]]
+id = "audit.hpet"
+title = "Platform clock forced to HPET"
+target = { kind = "bcd", element = "useplatformclock" }
+default = "not set"
+verdict = "harmful"
+sources = ["Stix Tweaks", "EXM"]
+why = "Forces every QueryPerformanceCounter call through HPET. Adds ~0.5-1 µs per call and raises frametime variance."
+
+[[audit]]
+id = "audit.large-cache"
+title = "LargeSystemCache enabled"
+target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management', name = "LargeSystemCache" }
+default = 0
+verdict = "harmful"
+sources = ["Paragon Tweaks"]
+why = "Server cache policy. The file cache grows at the expense of the game's working set."
+
+[[audit]]
+id = "audit.trim"
+title = "TRIM disabled"
+target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\FileSystem', name = "DisableDeleteNotification" }
+default = 0
+verdict = "harmful"
+sources = ["OptimizerDuck"]
+why = "SSD write performance degrades over time and load times stutter."
+
+[[audit]]
+id = "audit.wuauserv"
+title = "Windows Update service disabled"
+target = { kind = "service", name = "wuauserv" }
+default = 3
+verdict = "harmful"
+sources = ["OptimizerDuck", "EXM"]
+why = "No driver or security updates. Game Mode already pauses installs during play."
+
+[[audit]]
+id = "audit.boost-off"
+title = "Turbo boost disabled"
+target = { kind = "power", subgroup = "SUB_PROCESSOR", setting = "PERFBOOSTMODE" }
+default = 2
+verdict = "harmful"
+sources = ["Other"]
+why = "Locks the i5-7500 at 3.4 GHz instead of 3.8 GHz."
+
+[[audit]]
+id = "audit.game-mode"
+title = "Game Mode disabled"
+target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\GameBar', name = "AutoGameModeEnabled" }
+default = "not set"
+verdict = "conflict"
+sources = ["Stix Tweaks"]
+why = "Without Game Mode, Windows Update and driver installs can run mid-game."
+
+[[audit]]
+id = "audit.priority-sep"
+title = "Win32PrioritySeparation changed"
+target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\PriorityControl', name = "Win32PrioritySeparation" }
+default = 2
+verdict = "conflict"
+sources = ["EXM", "OptimizerDuck"]
+why = "Several tools write different values here; the last one wins. Benchmark 0x26 vs 0x2A and keep one."
+
+[[audit]]
+id = "audit.mouse-queue"
+title = "Mouse data queue shrunk"
+target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Services\mouclass\Parameters', name = "MouseDataQueueSize" }
+default = "not set"
+verdict = "placebo"
+sources = ["Stix Tweaks"]
+why = "No measurable latency change; very small values drop input at 1000 Hz+."
+
+[[audit]]
+id = "audit.qos"
+title = "QoS bandwidth limit set to 0"
+target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\Psched', name = "NonBestEffortLimit" }
+default = "not set"
+verdict = "placebo"
+sources = ["OptimizerDuck"]
+why = "Windows only reserves bandwidth for apps that request QoS. No effect on games."
+
+[[audit]]
+id = "audit.tcp-ack"
+title = "TcpAckFrequency / TCPNoDelay set"
+target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Services\Tcpip\Parameters', name = "TcpAckFrequency" }
+default = "not set"
+verdict = "placebo"
+sources = ["Paragon Tweaks", "Other"]
+why = "Nagle tweaks only affect TCP; nearly every competitive game uses UDP. Set per-interface, not here."
+
+[[audit]]
+id = "audit.svc-host-split"
+title = "Service host split threshold changed"
+target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control', name = "SvcHostSplitThresholdInKB" }
+default = 3670016
+verdict = "placebo"
+sources = ["OptimizerDuck"]
+why = "Groups services into fewer svchost processes. Saves a little RAM, no fps or latency effect."
+
+[[audit]]
+id = "audit.vbs-off"
+title = "VBS / memory integrity disabled"
+target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity', name = "Enabled" }
+default = "not set"
+verdict = "risk"
+sources = ["EXM"]
+why = "A real speed-up on older Intel, but weakens kernel protection and some anti-cheats refuse to run."

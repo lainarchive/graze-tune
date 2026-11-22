@@ -1,0 +1,15 @@
+[[tweak]]
+id = "audio.ducking"
+module = "Audio"
+title = "Disable communications ducking"
+why = "Stops Windows lowering game audio when voice chat opens a communications stream."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Multimedia\Audio', name = "UserDuckingPreference" }, value = 3, default = "not set" }]
+
+[[tweak]]
+id = "audio.audiosrv-priority"
+module = "Audio"
+title = "MMCSS audio task priority"
+why = "Keeps audio processing ahead of background work so it doesn't crackle under load."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio', name = "Priority" }, value = 6, default = 6 }]

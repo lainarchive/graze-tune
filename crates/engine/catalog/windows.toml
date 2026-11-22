@@ -1,0 +1,117 @@
+[[tweak]]
+id = "win.game-mode"
+module = "Windows UI"
+title = "Game Mode on"
+why = "Game Mode stops Windows Update installs and driver installs while you play. Some optimizers turn it off."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\GameBar', name = "AutoGameModeEnabled" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "win.game-dvr"
+module = "Windows UI"
+title = "Disable Game DVR background recording"
+why = "Background recording encodes the last minutes of play continuously."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'System\GameConfigStore', name = "GameDVR_Enabled" }, value = 0, default = 1 },
+  { target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\GameDVR', name = "AppCaptureEnabled" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "win.transparency"
+module = "Windows UI"
+title = "Disable transparency effects"
+why = "Less DWM blur work while alt-tabbed or using a borderless game."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Themes\Personalize', name = "EnableTransparency" }, value = 0, default = 1 }]
+
+[[tweak]]
+id = "win.notifications"
+module = "Windows UI"
+title = "Silence toast notifications"
+why = "Toasts can knock a fullscreen game out of independent flip."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\PushNotifications', name = "ToastEnabled" }, value = 0, default = "not set" }]
+
+[[tweak]]
+id = "win.menu-delay"
+module = "Windows UI"
+title = "Instant menus"
+why = "Removes the 400 ms menu show delay."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Desktop', name = "MenuShowDelay" }, value = "0", default = "400" }]
+
+[[tweak]]
+id = "bg.telemetry"
+module = "Background"
+title = "Telemetry: required only"
+why = "Lowers diagnostic data collection and the DiagTrack uploads that come with it."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\DataCollection', name = "AllowTelemetry" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "bg.diagtrack"
+module = "Background"
+title = "Connected User Experiences on demand"
+why = "DiagTrack wakes periodically to upload telemetry."
+risk = "safe"
+changes = [{ target = { kind = "service", name = "DiagTrack" }, value = 3, default = 2 }]
+
+[[tweak]]
+id = "bg.background-apps"
+module = "Background"
+title = "Block background Store apps"
+why = "Stops Store apps running in the background."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications', name = "GlobalUserDisabled" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "bg.compat-appraiser"
+module = "Background"
+title = "Disable compatibility appraiser task"
+why = "Microsoft Compatibility Appraiser scans every program and spikes CPU for minutes."
+risk = "safe"
+changes = [{ target = { kind = "task", path = '\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser' }, value = 0, default = 1 }]
+
+[[tweak]]
+id = "svc.wsearch-manual"
+module = "Services"
+title = "Windows Search on demand"
+why = "The indexer competes for disk and CPU after installs and patches. Start menu search still works, only slower."
+risk = "caution"
+changes = [{ target = { kind = "service", name = "WSearch" }, value = 3, default = 2 }]
+
+[[tweak]]
+id = "svc.xbox-manual"
+module = "Services"
+title = "Xbox services on demand"
+why = "Starts Xbox Live services only when an Xbox app asks for them."
+risk = "safe"
+changes = [
+  { target = { kind = "service", name = "XblAuthManager" }, value = 3, default = 3 },
+  { target = { kind = "service", name = "XboxNetApiSvc" }, value = 3, default = 3 },
+]
+
+[[tweak]]
+id = "svc.wuauserv-default"
+module = "Services"
+title = "Windows Update on (manual trigger)"
+why = "Disabling Windows Update breaks driver and security updates; Game Mode already pauses installs while you play."
+risk = "safe"
+changes = [{ target = { kind = "service", name = "wuauserv" }, value = 3, default = 3 }]
+
+[[tweak]]
+id = "reg.startup-delay"
+module = "Registry"
+title = "No startup app delay"
+why = "Removes Explorer's artificial delay before starting startup apps."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize', name = "StartupDelayInMSec" }, value = 0, default = "not set" }]
+
+[[tweak]]
+id = "reg.auto-end-tasks"
+module = "Registry"
+title = "Fast shutdown of hung apps"
+why = "Closes apps that hang at shutdown instead of waiting."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Desktop', name = "AutoEndTasks" }, value = "1", default = "not set" }]

@@ -1,0 +1,127 @@
+[[tweak]]
+id = "nv.low-latency-ultra"
+module = "NVIDIA profile"
+title = "Low Latency Mode: Ultra"
+why = "Just-in-time frame submission. Only helps when GPU-bound; on a CPU-bound i5-7500 benchmark it."
+risk = "caution"
+changes = [
+  { target = { kind = "nvidia", setting = 0x0005F543 }, value = 2, default = 0 },
+  { target = { kind = "nvidia", setting = 0x10835000 }, value = 1, default = 0 },
+  { target = { kind = "nvidia", setting = 0x007BA09E }, value = 1, default = 0 },
+]
+
+[[tweak]]
+id = "nv.vsync-off"
+module = "NVIDIA profile"
+title = "Vertical sync: force off"
+why = "Removes vsync queueing. Pair with G-SYNC and a frame cap if you have VRR."
+risk = "safe"
+changes = [{ target = { kind = "nvidia", setting = 0x00A879CF }, value = 0x08416747, default = 0x60925292 }]
+
+[[tweak]]
+id = "nv.power-max"
+module = "NVIDIA profile"
+title = "Power management: prefer maximum performance"
+why = "Stops the GPU dropping clocks between frames, which shows up as frametime spikes."
+risk = "safe"
+changes = [{ target = { kind = "nvidia", setting = 0x1057EB71 }, value = 1, default = 5 }]
+
+[[tweak]]
+id = "nv.shader-cache-unlimited"
+module = "NVIDIA profile"
+title = "Shader cache size: unlimited"
+why = "Avoids shader recompiles (and their stutter) when the default cache fills."
+risk = "safe"
+changes = [{ target = { kind = "nvidia", setting = 0x00AC8497 }, value = 0xFFFFFFFF, default = 0x4000 }]
+
+[[tweak]]
+id = "nv.texture-performance"
+module = "NVIDIA profile"
+title = "Texture filtering: high performance"
+why = "Small fps gain, slightly blurrier textures at an angle."
+risk = "safe"
+changes = [{ target = { kind = "nvidia", setting = 0x00CE2691 }, value = 0x14, default = 0 }]
+
+[[tweak]]
+id = "nv.threaded-opt"
+module = "NVIDIA profile"
+title = "Threaded optimization: on"
+why = "Offloads OpenGL driver work to another thread. Auto is usually right; on for OpenGL games."
+risk = "caution"
+changes = [{ target = { kind = "nvidia", setting = 0x20C1221E }, value = 1, default = 0 }]
+
+[[tweak]]
+id = "nv.highest-refresh"
+module = "NVIDIA profile"
+title = "Preferred refresh rate: highest available"
+why = "Makes fullscreen games use the monitor's highest refresh rate."
+risk = "safe"
+changes = [{ target = { kind = "nvidia", setting = 0x0064B541 }, value = 1, default = 0 }]
+
+[[tweak]]
+id = "nvhw.msi"
+module = "NVIDIA hardware"
+title = "MSI mode on the RTX 3050"
+why = "Message-signaled interrupts for the GPU. Same change as in Interrupts & drivers."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "device_registry", class = "display", subkey = 'Interrupt Management\MessageSignaledInterruptProperties', name = "MSISupported" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "nvhw.telemetry"
+module = "NVIDIA hardware"
+title = "Disable NVIDIA telemetry container"
+why = "Removes a background service that wakes periodically."
+risk = "safe"
+changes = [{ target = { kind = "service", name = "NvTelemetryContainer" }, value = 4, default = 2 }]
+
+[[tweak]]
+id = "nvhw.hdcp"
+module = "NVIDIA hardware"
+title = "Disable HDCP"
+why = "Removes HDCP handshakes on display mode changes. Breaks protected streaming video."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000', name = "RMHdcpKeyglobZero" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "nvhw.pcie-aspm"
+module = "NVIDIA hardware"
+title = "PCIe link power management off"
+why = "Keeps the GPU's PCIe link at full power so it doesn't retrain between frames."
+risk = "safe"
+changes = [{ target = { kind = "power", subgroup = "SUB_PCIEXPRESS", setting = "ASPM" }, value = 0, default = 1 }]
+
+[[tweak]]
+id = "display.hags"
+module = "Display path"
+title = "Hardware-accelerated GPU scheduling"
+why = "Lets the GPU manage its own queue. Required for DLSS frame generation; benchmark on older CPUs."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\GraphicsDrivers', name = "HwSchMode" }, value = 2, default = 1 }]
+
+[[tweak]]
+id = "display.mpo"
+module = "Display path"
+title = "Disable multiplane overlay"
+why = "MPO causes flicker and stutter on some NVIDIA drivers with mixed monitors."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows\Dwm', name = "OverlayTestMode" }, value = 5, default = "not set" }]
+
+[[tweak]]
+id = "display.windowed-opt"
+module = "Display path"
+title = "Optimizations for windowed games"
+why = "Uses flip-model presentation for DX10/11 windowed games: lower latency, allows VRR."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\DirectX\UserGpuPreferences', name = "DirectXUserGlobalSettings" }, value = "SwapEffectUpgradeEnable=1;", default = "not set" }]
+
+[[tweak]]
+id = "display.fso"
+module = "Display path"
+title = "Keep fullscreen optimizations on"
+why = "Disabling FSO globally is a common placebo tweak; with FSO games get independent flip anyway."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKCU", path = 'System\GameConfigStore', name = "GameDVR_FSEBehaviorMode" }, value = 0, default = 0 }]

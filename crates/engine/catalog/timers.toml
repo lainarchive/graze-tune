@@ -1,0 +1,42 @@
+[[tweak]]
+id = "timers.no-platform-clock"
+module = "Timers"
+title = "Use TSC, not forced HPET"
+why = "Forcing HPET routes every QueryPerformanceCounter call through a slow timer and raises frametime variance."
+risk = "safe"
+changes = [{ target = { kind = "bcd", element = "useplatformclock" }, value = "not set", default = "not set" }]
+
+[[tweak]]
+id = "timers.no-platform-tick"
+module = "Timers"
+title = "Default platform tick"
+why = "useplatformtick forces the legacy tick source; the default is better on Kaby Lake and newer."
+risk = "safe"
+changes = [{ target = { kind = "bcd", element = "useplatformtick" }, value = "not set", default = "not set" }]
+
+[[tweak]]
+id = "timers.dynamic-tick"
+module = "Timers"
+title = "Disable dynamic tick"
+why = "Keeps the system timer ticking at a fixed rate. Raises idle power."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "bcd", element = "disabledynamictick" }, value = "yes", default = "not set" }]
+
+[[tweak]]
+id = "timers.tsc-sync"
+module = "Timers"
+title = "Enhanced TSC sync policy"
+why = "Uses the enhanced TSC synchronization policy at boot."
+risk = "safe"
+restart = true
+changes = [{ target = { kind = "bcd", element = "tscsyncpolicy" }, value = "enhanced", default = "not set" }]
+
+[[tweak]]
+id = "timers.global-resolution"
+module = "Timers"
+title = "Allow global timer resolution"
+why = "Windows 11 makes timer resolution per-process. This lets the 0.5 ms request from graze-tune apply to games too."
+risk = "safe"
+restart = true
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Session Manager\kernel', name = "GlobalTimerResolutionRequests" }, value = 1, default = "not set" }]

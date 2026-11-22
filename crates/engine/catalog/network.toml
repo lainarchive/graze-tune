@@ -1,0 +1,39 @@
+[[tweak]]
+id = "net.throttling-index"
+module = "Network"
+title = "Disable multimedia network throttling"
+why = "Removes the 10 packets/ms cap MMCSS applies to non-multimedia traffic while audio plays."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile', name = "NetworkThrottlingIndex" }, value = 0xFFFFFFFF, default = 10 }]
+
+[[tweak]]
+id = "net.nic-interrupt-moderation"
+module = "Network"
+title = "NIC interrupt moderation off"
+why = "Delivers packets immediately instead of batching them. Slightly higher CPU use."
+risk = "caution"
+changes = [{ target = { kind = "device_registry", class = "net", subkey = "", name = "*InterruptModeration" }, value = "0", default = "1" }]
+
+[[tweak]]
+id = "net.nic-eee"
+module = "Network"
+title = "Disable Energy Efficient Ethernet"
+why = "EEE puts the link to sleep between packets and adds wake latency."
+risk = "safe"
+changes = [{ target = { kind = "device_registry", class = "net", subkey = "", name = "*EEE" }, value = "0", default = "1" }]
+
+[[tweak]]
+id = "net.nic-flow-control"
+module = "Network"
+title = "Disable flow control"
+why = "Stops pause frames from the switch stalling the receive path."
+risk = "safe"
+changes = [{ target = { kind = "device_registry", class = "net", subkey = "", name = "*FlowControl" }, value = "0", default = "3" }]
+
+[[tweak]]
+id = "net.qos-reserve"
+module = "Network"
+title = "Default QoS bandwidth reserve"
+why = "'Free 20% bandwidth' tweaks are placebo: Windows only reserves bandwidth for apps that ask for it."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\Psched', name = "NonBestEffortLimit" }, value = "not set", default = "not set" }]

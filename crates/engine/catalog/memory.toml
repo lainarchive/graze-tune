@@ -1,0 +1,31 @@
+[[tweak]]
+id = "mem.large-system-cache"
+module = "Memory"
+title = "Workstation file cache"
+why = "LargeSystemCache=1 is a server setting that starves games of working set."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management', name = "LargeSystemCache" }, value = 0, default = 0 }]
+
+[[tweak]]
+id = "mem.paging-executive"
+module = "Memory"
+title = "Keep kernel in RAM"
+why = "DisablePagingExecutive keeps drivers and kernel code resident. Safe with 16 GB."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management', name = "DisablePagingExecutive" }, value = 1, default = 0 }]
+
+[[tweak]]
+id = "mem.sysmain-manual"
+module = "Memory"
+title = "SysMain on demand"
+why = "Superfetch prefetching causes disk and CPU bursts on 4-thread CPUs. Manual start keeps it available."
+risk = "safe"
+changes = [{ target = { kind = "service", name = "SysMain" }, value = 3, default = 2 }]
+
+[[tweak]]
+id = "mem.prefetcher"
+module = "Memory"
+title = "Disable boot and app prefetcher"
+why = "Avoids prefetch reads competing with game asset streaming on SATA SSDs."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters', name = "EnablePrefetcher" }, value = 0, default = 3 }]
