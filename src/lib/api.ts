@@ -87,6 +87,7 @@ for (const [t, v] of seed) mockValues.set(key(t), v)
 const mockRead = (t: Target): Value => mockValues.get(key(t)) ?? missing
 const mockWrite = (t: Target, v: Value) => mockValues.set(key(t), v)
 const mockBatches: Batch[] = []
+const mockApps: Record<string, string[]> = { VALORANT: ['valorant-win64-shipping.exe'], 'Counter-strike 2': ['cs2.exe'], Fortnite: ['fortniteclient-win64-shipping.exe'] }
 
 const mockAudit = (): AuditReport => {
   const rules = catalogJson.audit as unknown as { id: string; title: string; target: Target; default: Value; verdict: Verdict; sources: string[]; why: string }[]
@@ -125,22 +126,43 @@ const mock: Record<string, (a: Record<string, unknown>) => unknown> = {
   },
   history: () => [...mockBatches],
   revert: ({ id }) => {
-    const b = mockBatches.find((x) => x.id === id)
+    const i = mockBatches.findIndex((x) => x.id === id)
+    const b = mockBatches[i]
+    const newer = new Set(mockBatches.slice(i + 1).filter((x) => x.state === 'applied').flatMap((x) => x.entries.map((e) => key(e.target))))
+    if (b?.entries.some((e) => newer.has(key(e.target)))) throw new Error(`batch ${id} has values changed again by a newer batch; revert that one first`)
     if (b && b.state !== 'reverted') { [...b.entries].reverse().forEach((e) => mockWrite(e.target, e.old)); b.state = 'reverted' }
     return []
   },
   revert_all: () => { [...mockBatches].reverse().filter((b) => b.state === 'applied').forEach((b) => mock.revert({ id: b.id })); return [] },
-  nv_profiles: () => [{ name: 'Base Profile', predefined: true, apps: 0, settings: 4 }, { name: 'VALORANT', predefined: true, apps: 1, settings: 12 }, { name: 'Counter-strike 2', predefined: true, apps: 1, settings: 9 }, { name: 'Fortnite', predefined: true, apps: 3, settings: 11 }],
-  nv_settings: ({ profile }) => mockNvSettings.map((s) => {
+  nv_profiles: () => [{ name: 'Base Profile', predefined: true, apps: 0, settings: 4 }, ...Object.entries(mockApps).map(([name, a]) => ({ name, predefined: false, apps: a.length, settings: 0 }))],
+  nv_settings: ({ profile }) => [...mockNvSettings, ...[...mockValues.keys()].map((k) => JSON.parse(k) as Target).flatMap((t) => (t.kind === 'nvidia' && (t.profile ?? null) === ((profile as string) ?? null) && !mockNvSettings.some((s) => s.id === t.setting) ? [{ id: t.setting, name: '', value: missing, predefined: missing, user_set: false }] : []))].map((s) => {
     const v = mockValues.get(key({ kind: 'nvidia', profile: (profile as string) ?? null, setting: s.id }))
     return v && v.type !== 'missing' ? { ...s, value: v, user_set: true } : profile ? { ...s, value: s.predefined ?? s.value, user_set: false } : s
   }),
-  nv_apps: ({ profile }) => ({ VALORANT: ['valorant-win64-shipping.exe'], 'Counter-strike 2': ['cs2.exe'], Fortnite: ['fortniteclient-win64-shipping.exe'] })[profile as string] ?? [],
-  nv_add_app: () => null,
+  nv_apps: ({ profile }) => mockApps[profile as string] ?? [],
+  nv_add_app: ({ profile, exe }) => {
+    const a = (mockApps[profile as string] ??= [])
+    if (!a.some((x) => x.toLowerCase() === (exe as string).toLowerCase())) a.push(exe as string)
+    return null
+  },
   nip_read: () => ({ changes: [{ target: { kind: 'nvidia', profile: null, setting: 0x00a879cf }, value: dword(0x08416747) }], apps: [] }),
   nip_write: () => 2,
-  bench_ping: async () => { await new Promise((r) => setTimeout(r, 1200)); return { samples: 20, lost: 0, avg_ms: 33.8, min_ms: 31.2, jitter_ms: 2.1 } },
-  bench_frames: () => { throw new Error('Frametime capture needs the Windows app') },
+  bench_ping: async ({ count }) => {
+    await new Promise((r) => setTimeout(r, 1200))
+    const rtts = Array.from({ length: count as number }, () => 31 + Math.random() * 6)
+    const avg = rtts.reduce((a, b) => a + b, 0) / rtts.length
+    const jitter = rtts.slice(1).reduce((a, r, i) => a + Math.abs(r - rtts[i]), 0) / (rtts.length - 1)
+    return { samples: rtts.length, lost: 0, avg_ms: avg, min_ms: Math.min(...rtts), jitter_ms: jitter }
+  },
+  // Sample data for the preview; the Windows app runs PresentMon.
+  bench_frames: async ({ seconds }) => {
+    await new Promise((r) => setTimeout(r, 1500))
+    const frametimes = Array.from({ length: Math.min(144 * (seconds as number), 6000) }, () => 6.9 + Math.random() * 1.2 + (Math.random() < 0.01 ? 8 + Math.random() * 10 : 0))
+    const sorted = [...frametimes].sort((a, b) => b - a)
+    const avg = frametimes.reduce((a, b) => a + b, 0) / frametimes.length
+    const low = (p: number) => 1000 / (sorted.slice(0, Math.max(1, Math.floor(sorted.length * p))).reduce((a, b) => a + b, 0) / Math.max(1, Math.floor(sorted.length * p)))
+    return { frametimes, stats: { frames: frametimes.length, avg_fps: 1000 / avg, low1_fps: low(0.01), low01_fps: low(0.001), avg_ms: avg, p99_ms: sorted[Math.floor(sorted.length * 0.01)] } }
+  },
   timer_resolution: () => ({ min_ms: 15.625, max_ms: 0.5, current_ms: 0.5 }),
 }
 
