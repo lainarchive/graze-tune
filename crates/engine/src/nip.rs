@@ -106,6 +106,15 @@ impl Nip {
         Ok(out)
     }
 
+    /// Game executables to attach to each named profile before applying `plan`.
+    pub fn apps(&self) -> Vec<(String, Vec<String>)> {
+        self.profiles
+            .iter()
+            .filter(|p| p.name != BASE_PROFILE && !p.executables.items.is_empty())
+            .map(|p| (p.name.clone(), p.executables.items.clone()))
+            .collect()
+    }
+
     /// Every setting as a target/value pair, ready for an undo-logged batch.
     pub fn plan(&self) -> Result<Vec<(Target, Value)>, NipError> {
         let mut out = vec![];

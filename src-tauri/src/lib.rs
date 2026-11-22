@@ -193,18 +193,27 @@ struct PlannedOut {
     value: Value,
 }
 
+#[derive(Serialize)]
+struct NipPlan {
+    changes: Vec<PlannedOut>,
+    apps: Vec<(String, Vec<String>)>,
+}
+
 /// Parses a .nip file into the changes it would make. Nothing is written until `apply`.
 #[tauri::command]
-async fn nip_read(core: State<'_>, path: String) -> Res<Vec<PlannedOut>> {
+async fn nip_read(core: State<'_>, path: String) -> Res<NipPlan> {
     blocking(&core, move |_| {
         let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
         let nip = Nip::parse(&bytes).map_err(|e| e.to_string())?;
-        Ok(nip
-            .plan()
-            .map_err(|e| e.to_string())?
-            .into_iter()
-            .map(|(target, value)| PlannedOut { target, value })
-            .collect())
+        Ok(NipPlan {
+            changes: nip
+                .plan()
+                .map_err(|e| e.to_string())?
+                .into_iter()
+                .map(|(target, value)| PlannedOut { target, value })
+                .collect(),
+            apps: nip.apps(),
+        })
     })
     .await
 }
