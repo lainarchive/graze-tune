@@ -26,3 +26,7 @@ test('frame pacing averages into Latency', () => {
   const h = pcHealth([], () => undefined, { frames: 1, avg_fps: 100, low1_fps: 50, low01_fps: 40, avg_ms: 10, p99_ms: 15 })
   assert.equal(h.parts[1].value, 75)
 })
+
+test('unchecked settings are called out', () => {
+  assert.equal(pcHealth([], () => undefined, null, 5).parts[0].drag, 'Nothing dragging it down · 5 not checked')
+})

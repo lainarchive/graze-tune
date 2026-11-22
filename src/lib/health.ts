@@ -26,7 +26,7 @@ function summary(fs: Finding[]) {
 }
 
 /** One 0-100 score per area from audit findings (and the last frame capture), averaged into PC health. */
-export function pcHealth(findings: Finding[], moduleOf: (t: Target) => string | undefined, frames?: FrameStats | null) {
+export function pcHealth(findings: Finding[], moduleOf: (t: Target) => string | undefined, frames?: FrameStats | null, unchecked = 0) {
   const by: Record<Exclude<Area, 'Audit'>, Finding[]> = { Latency: [], Power: [], Background: [] }
   for (const f of findings) by[area(f.target, moduleOf(f.target))].push(f)
   const leftovers = findings.filter((f) => f.verdict === 'harmful' || f.verdict === 'conflict')
@@ -34,7 +34,8 @@ export function pcHealth(findings: Finding[], moduleOf: (t: Target) => string | 
   const pacing = frames && frames.avg_ms > 0 ? clamp(100 - (frames.p99_ms / frames.avg_ms - 1) * 100) : null
   const lat = score(by.Latency)
   const parts: Part[] = [
-    { label: 'Audit', value: score(leftovers), drag: summary(leftovers), go: 'audit' },
+    // Unreadable settings (boot settings without admin) aren't scored, so say so instead of implying they're clean.
+    { label: 'Audit', value: score(leftovers), drag: unchecked ? `${summary(leftovers)} · ${unchecked} not checked` : summary(leftovers), go: 'audit' },
     {
       label: 'Latency',
       value: pacing === null ? lat : Math.round((lat + pacing) / 2),
