@@ -1,0 +1,38 @@
+[[tweak]]
+id = "irq.gpu-msi"
+module = "Interrupts & drivers"
+title = "MSI mode on the GPU"
+why = "Message-signaled interrupts avoid shared line interrupts and cut DPC latency."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "device_registry", class = "display", subkey = 'Interrupt Management\MessageSignaledInterruptProperties', name = "MSISupported" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "irq.net-msi"
+module = "Interrupts & drivers"
+title = "MSI mode on the network adapter"
+why = "Same as for the GPU; the I219-LM supports MSI."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "device_registry", class = "net", subkey = 'Interrupt Management\MessageSignaledInterruptProperties', name = "MSISupported" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "irq.gpu-priority"
+module = "Interrupts & drivers"
+title = "High interrupt priority for the GPU"
+why = "Marks GPU interrupts high priority so they are serviced before storage and USB."
+risk = "caution"
+restart = true
+changes = [{ target = { kind = "device_registry", class = "display", subkey = 'Interrupt Management\Affinity Policy', name = "DevicePriority" }, value = 3, default = "not set" }]
+
+[[tweak]]
+id = "irq.gpu-affinity"
+module = "Interrupts & drivers"
+title = "Move GPU interrupts off CPU 0"
+why = "CPU 0 also services network and USB. Pins nvlddmkm interrupts to CPU 2."
+risk = "caution"
+restart = true
+changes = [
+  { target = { kind = "device_registry", class = "display", subkey = 'Interrupt Management\Affinity Policy', name = "DevicePolicy" }, value = 4, default = "not set" },
+  { target = { kind = "device_registry", class = "display", subkey = 'Interrupt Management\Affinity Policy', name = "AssignmentSetOverride" }, value = 4, default = "not set" },
+]

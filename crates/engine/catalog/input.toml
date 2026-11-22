@@ -1,0 +1,38 @@
+[[tweak]]
+id = "input.usb-suspend"
+module = "Input"
+title = "Disable USB selective suspend"
+why = "Stops Windows suspending idle USB devices, which can drop the first mouse movement."
+risk = "safe"
+changes = [{ target = { kind = "power", subgroup = "2a737441-1930-4402-8d77-b2bebba308a3", setting = "48e6b7a6-50f5-4782-a5d4-53bb8f07e226" }, value = 0, default = 1 }]
+
+[[tweak]]
+id = "input.mouse-accel"
+module = "Input"
+title = "Disable pointer acceleration"
+why = "1:1 mouse movement in menus and games that use the Windows cursor."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Mouse', name = "MouseSpeed" }, value = "0", default = "1" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Mouse', name = "MouseThreshold1" }, value = "0", default = "6" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Mouse', name = "MouseThreshold2" }, value = "0", default = "10" },
+]
+
+[[tweak]]
+id = "input.mouse-queue"
+module = "Input"
+title = "Default mouse data queue"
+why = "Shrinking MouseDataQueueSize is a placebo at best and drops input at high polling rates; keep the default 100."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Services\mouclass\Parameters', name = "MouseDataQueueSize" }, value = 100, default = 100 }]
+
+[[tweak]]
+id = "input.sticky-keys"
+module = "Input"
+title = "Disable sticky/filter key shortcuts"
+why = "Stops Shift x5 popping a dialog over the game."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Accessibility\StickyKeys', name = "Flags" }, value = "506", default = "510" },
+  { target = { kind = "registry", hive = "HKCU", path = 'Control Panel\Accessibility\Keyboard Response', name = "Flags" }, value = "122", default = "126" },
+]

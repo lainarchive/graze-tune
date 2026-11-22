@@ -1,0 +1,32 @@
+[[tweak]]
+id = "sec.vbs"
+module = "Security tradeoffs"
+title = "Disable VBS / memory integrity"
+why = "Removes the hypervisor from the gaming path (5-10% on 7th-gen Intel). Weakens kernel protection; Valorant, FACEIT and some others require it."
+risk = "opt-in"
+restart = true
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\DeviceGuard', name = "EnableVirtualizationBasedSecurity" }, value = 0, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity', name = "Enabled" }, value = 0, default = "not set" },
+]
+
+[[tweak]]
+id = "sec.spectre"
+module = "Security tradeoffs"
+title = "Disable Spectre/Meltdown mitigations"
+why = "Large syscall-cost win on Kaby Lake. Exposes you to cross-process data leaks from untrusted code."
+risk = "opt-in"
+restart = true
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management', name = "FeatureSettingsOverride" }, value = 3, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management', name = "FeatureSettingsOverrideMask" }, value = 3, default = "not set" },
+]
+
+[[tweak]]
+id = "sec.hypervisor-launch"
+module = "Security tradeoffs"
+title = "Don't launch the hypervisor"
+why = "Turns off Hyper-V at boot. Breaks WSL2, Windows Sandbox and some emulators (MuMuPlayer has a non-Hyper-V mode)."
+risk = "opt-in"
+restart = true
+changes = [{ target = { kind = "bcd", element = "hypervisorlaunchtype" }, value = "off", default = "not set" }]

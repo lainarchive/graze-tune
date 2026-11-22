@@ -1,0 +1,78 @@
+[[tweak]]
+id = "cpu.priority-separation"
+module = "CPU & scheduler"
+title = "Foreground priority boost"
+why = "Short, variable quanta with a 3:1 foreground boost so the game thread gets CPU back sooner."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\PriorityControl', name = "Win32PrioritySeparation" }, value = 38, default = 2 }]
+
+[[tweak]]
+id = "cpu.core-parking"
+module = "CPU & scheduler"
+title = "Disable core parking"
+why = "Keeps every core unparked so the game thread never waits on a core wake-up."
+risk = "safe"
+changes = [{ target = { kind = "power", subgroup = "SUB_PROCESSOR", setting = "CPMINCORES" }, value = 100, default = 10 }]
+
+[[tweak]]
+id = "cpu.min-state"
+module = "CPU & scheduler"
+title = "Minimum processor state 100%"
+why = "Stops clocks dropping between frames. Costs idle power and heat."
+risk = "caution"
+changes = [{ target = { kind = "power", subgroup = "SUB_PROCESSOR", setting = "PROCTHROTTLEMIN" }, value = 100, default = 5 }]
+
+[[tweak]]
+id = "cpu.boost-aggressive"
+module = "CPU & scheduler"
+title = "Turbo boost: aggressive"
+why = "Makes sure turbo is enabled and ramps quickly. Some optimizers turn it off, which costs a lot of fps on a 4-core CPU."
+risk = "safe"
+changes = [{ target = { kind = "power", subgroup = "SUB_PROCESSOR", setting = "PERFBOOSTMODE" }, value = 2, default = 2 }]
+
+[[tweak]]
+id = "cpu.idle-promote"
+module = "CPU & scheduler"
+title = "Shallow C-states during play"
+why = "Biases the CPU towards shallow idle states to cut wake-up latency."
+risk = "caution"
+changes = [
+  { target = { kind = "power", subgroup = "SUB_PROCESSOR", setting = "IDLEPROMOTE" }, value = 100, default = 40 },
+  { target = { kind = "power", subgroup = "SUB_PROCESSOR", setting = "IDLEDEMOTE" }, value = 100, default = 20 },
+]
+
+[[tweak]]
+id = "cpu.idle-disable"
+module = "CPU & scheduler"
+title = "Disable processor idle"
+why = "Keeps cores spinning instead of idling. Large heat and power cost; only helps on some systems."
+risk = "caution"
+changes = [{ target = { kind = "power", subgroup = "SUB_PROCESSOR", setting = "IDLEDISABLE" }, value = 1, default = 0 }]
+
+[[tweak]]
+id = "cpu.games-priority"
+module = "CPU & scheduler"
+title = "Multimedia scheduler: games task"
+why = "Gives the MMCSS 'Games' task high scheduling and GPU priority."
+risk = "safe"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games', name = "GPU Priority" }, value = 8, default = 8 },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games', name = "Priority" }, value = 6, default = 2 },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games', name = "Scheduling Category" }, value = "High", default = "Medium" },
+]
+
+[[tweak]]
+id = "cpu.system-responsiveness"
+module = "CPU & scheduler"
+title = "MMCSS system responsiveness 10%"
+why = "Reserves less CPU for background tasks while multimedia work runs. 0 is clamped to 20 by Windows, so 10 is the real minimum."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile', name = "SystemResponsiveness" }, value = 10, default = 20 }]
+
+[[tweak]]
+id = "cpu.power-throttling"
+module = "CPU & scheduler"
+title = "Disable power throttling"
+why = "Stops Windows putting background processes (voice chat, overlays) on efficiency scheduling."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Power\PowerThrottling', name = "PowerThrottlingOff" }, value = 1, default = "not set" }]

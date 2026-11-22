@@ -1,0 +1,39 @@
+[[tweak]]
+id = "storage.trim"
+module = "Storage"
+title = "TRIM enabled"
+why = "Without TRIM, SSD writes slow down over time and cause load stutter."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\FileSystem', name = "DisableDeleteNotification" }, value = 0, default = 0 }]
+
+[[tweak]]
+id = "storage.last-access"
+module = "Storage"
+title = "Disable last-access timestamps"
+why = "Skips a metadata write on every file read."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\FileSystem', name = "NtfsDisableLastAccessUpdate" }, value = 2147483649, default = 2147483650 }]
+
+[[tweak]]
+id = "storage.8dot3"
+module = "Storage"
+title = "Disable 8.3 short names"
+why = "Stops NTFS generating legacy short names for new files."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\FileSystem', name = "NtfsDisable8dot3NameCreation" }, value = 1, default = 2 }]
+
+[[tweak]]
+id = "storage.disk-idle"
+module = "Storage"
+title = "Never spin down / idle the disk"
+why = "Avoids link power wake-up hitches when a game streams assets."
+risk = "safe"
+changes = [{ target = { kind = "power", subgroup = "SUB_DISK", setting = "DISKIDLE" }, value = 0, default = 1200 }]
+
+[[tweak]]
+id = "storage.ahci-link-power"
+module = "Storage"
+title = "AHCI link power: active"
+why = "Keeps the SATA link out of partial/slumber states."
+risk = "safe"
+changes = [{ target = { kind = "power", subgroup = "SUB_DISK", setting = "0b2d69d7-a2a1-449c-9680-f91c70521c60" }, value = 0, default = 3 }]
