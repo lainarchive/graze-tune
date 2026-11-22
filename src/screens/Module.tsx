@@ -29,10 +29,13 @@ export default function Module({ id }: { id: string }) {
   const [result, setResult] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    const vals = await api.read(tweaks.flatMap((t) => t.changes.map((c) => c.target)))
+    const [vals, batches] = await Promise.all([api.read(tweaks.flatMap((t) => t.changes.map((c) => c.target))), api.history()])
+    // Boot settings can't be read without admin; fall back to the last value graze-tune wrote.
+    const written = new Map<string, Value>()
+    for (const b of batches) if (b.state === 'applied') for (const e of b.entries) written.set(fmtTarget(e.target), e.new)
     let i = 0
     const next: Record<string, (Value | null)[]> = {}
-    for (const t of tweaks) next[t.id] = t.changes.map(() => vals[i++])
+    for (const t of tweaks) next[t.id] = t.changes.map((c) => vals[i++] ?? (c.target.kind === 'bcd' ? written.get(fmtTarget(c.target)) ?? null : null))
     setCurrent(next)
     setWant({})
   }, [tweaks])
@@ -141,7 +144,8 @@ export default function Module({ id }: { id: string }) {
 
 function Row({ t, cur, on, changed, onToggle }: { t: Tweak; cur?: (Value | null)[]; on: boolean; changed: boolean; onToggle: () => void }) {
   const r = riskMeta[t.risk]
-  const unreadable = cur?.every((v) => v === null)
+  // Boot settings need admin to read; the elevated apply reads them before writing.
+  const unreadable = cur?.every((v) => v === null) && !t.changes.every((c) => c.target.kind === 'bcd')
   return (
     <div className={cn('relative flex gap-5 px-5 py-4 transition-colors', on && 'bg-primary/[0.03]', unreadable && 'opacity-60')}>
       {on && <span className="absolute top-4 bottom-4 left-0 w-0.5 rounded-full bg-primary" />}

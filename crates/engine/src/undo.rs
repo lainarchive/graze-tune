@@ -86,7 +86,16 @@ impl UndoLog {
             std::fs::create_dir_all(dir)?;
         }
         let tmp = self.path.with_extension("tmp");
-        std::fs::write(&tmp, serde_json::to_vec_pretty(&self.batches)?)?;
+        // The log may live in a user-writable folder while an elevated worker saves it, so never
+        // write through a link left at the temp path.
+        let _ = std::fs::remove_file(&tmp);
+        std::io::Write::write_all(
+            &mut std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&tmp)?,
+            &serde_json::to_vec_pretty(&self.batches)?,
+        )?;
         std::fs::rename(&tmp, &self.path)?;
         Ok(())
     }

@@ -163,7 +163,7 @@ fn bcd_read(target: &Target, element: &str) -> SysResult<Value> {
     if !is_elevated() {
         return Err(backend_err(
             target,
-            "boot settings can only be read as admin",
+            "boot settings can only be read as admin (use Check as admin on the Audit page)",
         ));
     }
     let out = run(target, "bcdedit", &["/enum", "{current}"])?;

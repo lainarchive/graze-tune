@@ -176,7 +176,7 @@ export async function call<T>(cmd: string, args: Record<string, unknown> = {}): 
 
 export const api = {
   systemInfo: () => call<SystemInfo>('system_info'),
-  audit: () => call<AuditReport>('run_audit'),
+  audit: (elevated = false) => call<AuditReport>('run_audit', { elevated }),
   read: (targets: Target[]) => call<(Value | null)[]>('read_values', { targets }),
   apply: (label: string, changes: ChangeIn[], restorePoint: boolean) => call<Batch>('apply', { label, changes, restorePoint }),
   history: () => call<Batch[]>('history'),
