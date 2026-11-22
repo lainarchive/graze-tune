@@ -76,3 +76,22 @@ title = "Disable power throttling"
 why = "Stops Windows putting background processes (voice chat, overlays) on efficiency scheduling."
 risk = "safe"
 changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SYSTEM\CurrentControlSet\Control\Power\PowerThrottling', name = "PowerThrottlingOff" }, value = 1, default = "not set" }]
+
+[[tweak]]
+id = "cpu.games-io-priority"
+module = "CPU & scheduler"
+title = "Multimedia scheduler: games I/O priority"
+why = "Gives disk reads from MMCSS 'Games' threads high I/O priority."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games', name = "SFIO Priority" }, value = "High", default = "Normal" }]
+
+[[tweak]]
+id = "cpu.mmcss-no-lazy"
+module = "CPU & scheduler"
+title = "Multimedia scheduler: no idle detection"
+why = "Undocumented MMCSS values that keep its scheduling boost active instead of waiting for idle periods. Results vary by PC; benchmark before keeping."
+risk = "caution"
+changes = [
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile', name = "NoLazyMode" }, value = 1, default = "not set" },
+  { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile', name = "AlwaysOn" }, value = 1, default = "not set" },
+]

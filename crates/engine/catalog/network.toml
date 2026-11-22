@@ -37,3 +37,19 @@ title = "Default QoS bandwidth reserve"
 why = "'Free 20% bandwidth' tweaks are placebo: Windows only reserves bandwidth for apps that ask for it."
 risk = "safe"
 changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\Psched', name = "NonBestEffortLimit" }, value = "not set", default = "not set" }]
+
+[[tweak]]
+id = "net.delivery-optimization"
+module = "Network"
+title = "No peer-to-peer update sharing"
+why = "Delivery Optimization uploads Windows updates to other PCs, which eats upload bandwidth and raises ping. Updates still download from Microsoft."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization', name = "DODownloadMode" }, value = 0, default = "not set" }]
+
+[[tweak]]
+id = "net.smart-name-resolution"
+module = "Network"
+title = "Disable smart multi-homed name resolution"
+why = "Windows otherwise sends each DNS query out every adapter at once, which can bypass a VPN or a chosen DNS server."
+risk = "safe"
+changes = [{ target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows NT\DNSClient', name = "DisableSmartNameResolution" }, value = 1, default = "not set" }]

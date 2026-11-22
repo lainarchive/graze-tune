@@ -96,6 +96,7 @@ const SOURCES: &[&str] = &[
     include_str!("../catalog/network.toml"),
     include_str!("../catalog/windows.toml"),
     include_str!("../catalog/security.toml"),
+    include_str!("../catalog/privacy.toml"),
     include_str!("../catalog/audit.toml"),
 ];
 
@@ -138,7 +139,7 @@ mod tests {
             Ok(c) => c,
             Err(e) => panic!("{e}"),
         };
-        assert!(c.tweaks.len() >= 60, "only {} tweaks", c.tweaks.len());
+        assert!(c.tweaks.len() >= 110, "only {} tweaks", c.tweaks.len());
         let mut seen = HashSet::new();
         for t in &c.tweaks {
             assert!(seen.insert(t.id.clone()), "duplicate tweak id {}", t.id);

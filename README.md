@@ -4,7 +4,7 @@ A Windows gaming and latency optimizer. It audits what other tweak tools left be
 
 - **Audit first.** Reads registry, services, boot config, power plan, scheduled tasks and NVIDIA driver profiles, and flags leftovers from OptimizerDuck, EXM, Stix, Paragon and others as harmful, conflicting, placebo or worth keeping. Nothing is written until you choose an action.
 - **Every change is reversible.** Old values are written to a write-ahead undo log (`%APPDATA%\dev.lainarchive.grazetune\undo-log.json`) before anything changes, a restore point is made per batch, and Changes has a one-click revert of everything.
-- **Modules:** CPU & scheduler, timers, interrupts & MSI mode, memory, storage, NVIDIA driver profiles (Profile Inspector-style, with .nip import/export), NVIDIA hardware, display path, input, audio, network, services, background, Windows UI, security tradeoffs (opt-in), BIOS guide.
+- **Modules:** CPU & scheduler, timers, interrupts & MSI mode, memory, storage, NVIDIA driver profiles (Profile Inspector-style, with .nip import/export), NVIDIA hardware, display path, input, audio, network, services, background, Windows UI, privacy, security tradeoffs (opt-in), BIOS guide.
 - **Benchmarks:** PresentMon frametimes (avg, 1% and 0.1% lows), TCP ping and jitter, timer resolution.
 - **No drivers.** No kernel drivers, memory patching or anything anti-cheat could object to.
 
@@ -33,3 +33,7 @@ After editing `crates/engine/catalog/*.toml`, refresh the browser preview data:
 ```sh
 cargo run -p graze-engine --example export_catalog > src/data/catalog.json
 ```
+
+## Credits
+
+Many catalog entries were picked using [OptimizerDuck](https://github.com/itsfatduck/optimizerDuck) (GPL-3.0) as a reference for which settings to cover. No OptimizerDuck code or text is included; the entries and their descriptions are written for graze-tune.

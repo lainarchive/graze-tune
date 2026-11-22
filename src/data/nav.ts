@@ -1,4 +1,4 @@
-import { Activity, AudioLines, CircuitBoard, Cpu, FileCog, Gamepad2, Gauge, HardDrive, History, Layers2, ListChecks, MemoryStick, Monitor, MousePointer2, Network, PanelsTopLeft, ScanSearch, ShieldHalf, SlidersHorizontal, Thermometer, Timer, Waves, Zap, type LucideIcon } from 'lucide-react'
+import { Activity, AudioLines, CircuitBoard, Cpu, EyeOff, FileCog, Gamepad2, Gauge, HardDrive, History, Layers2, ListChecks, MemoryStick, Monitor, MousePointer2, Network, PanelsTopLeft, ScanSearch, ShieldHalf, SlidersHorizontal, Thermometer, Timer, Waves, Zap, type LucideIcon } from 'lucide-react'
 
 export type ModuleStatus = 'tuned' | 'pending' | 'issue'
 
@@ -36,6 +36,7 @@ export const moduleNav: { group: string; items: NavEntry[] }[] = [
     { id: 'Services', label: 'Services', icon: ListChecks, hint: 'Service profiles', status: 'issue' },
     { id: 'Background', label: 'Background', icon: Waves, hint: 'Startup, tasks, telemetry, updates', status: 'pending' },
     { id: 'Windows UI', label: 'Windows UI', icon: PanelsTopLeft, hint: 'Animations, Game Mode, Game Bar', status: 'tuned' },
+    { id: 'Privacy', label: 'Privacy', icon: EyeOff, hint: 'Recall, Copilot, ads, tracking', status: 'pending' },
     { id: 'Security tradeoffs', label: 'Security tradeoffs', icon: ShieldHalf, hint: 'VBS, HVCI, mitigations', status: 'pending' },
   ] },
   { group: 'Games', items: [
