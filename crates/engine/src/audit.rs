@@ -37,18 +37,20 @@ pub fn run(sys: &dyn System, catalog: &Catalog, ours: impl Fn(&Target) -> bool) 
         checked += 1;
         match sys.read(&rule.target) {
             // Missing means Windows uses its built-in default, so it is never a leftover.
-            Ok(current) if current != rule.default && current != Value::Missing => findings.push(Finding {
-                id: rule.id.clone(),
-                title: rule.title.clone(),
-                location: rule.target.to_string(),
-                target: rule.target.clone(),
-                ours: ours(&rule.target),
-                current,
-                windows_default: rule.default.clone(),
-                verdict: rule.verdict.clone(),
-                sources: rule.sources.clone(),
-                why: rule.why.clone(),
-            }),
+            Ok(current) if current != rule.default && current != Value::Missing => {
+                findings.push(Finding {
+                    id: rule.id.clone(),
+                    title: rule.title.clone(),
+                    location: rule.target.to_string(),
+                    target: rule.target.clone(),
+                    ours: ours(&rule.target),
+                    current,
+                    windows_default: rule.default.clone(),
+                    verdict: rule.verdict.clone(),
+                    sources: rule.sources.clone(),
+                    why: rule.why.clone(),
+                })
+            }
             Ok(_) => {}
             Err(crate::SysError::Unsupported) => {}
             Err(e) => errors.push(e.to_string()),
