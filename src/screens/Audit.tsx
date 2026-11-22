@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ChevronRight, FileCog, HardDrive, Cpu, ListChecks, MonitorCog, Power, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,9 +23,11 @@ export default function Audit() {
   const [error, setError] = useState<string | null>(null)
   const settings = useSettings()
   const [elapsed, setElapsed] = useState(0)
-  const load = useCallback(async (elevated = false) => {
+  const elevated = useRef(false)
+  const load = useCallback(async (asAdmin = false) => {
+    elevated.current = asAdmin
     const t = performance.now()
-    const r = await api.audit(elevated)
+    const r = await api.audit(asAdmin)
     setElapsed((performance.now() - t) / 1000)
     setReport(r)
   }, [])
@@ -39,7 +41,9 @@ export default function Audit() {
     try {
       const b = await api.apply(`Audit: reset ${list.length} item${list.length === 1 ? '' : 's'} to Windows default`, list.map((f) => ({ target: f.target, value: f.windows_default })), settings.restorePoint)
       if (b.state !== 'applied') setError(`Rolled back: ${b.error}`)
-      await load()
+      // After Check as admin, drop the reset items instead of rerunning an audit that loses boot settings.
+      else if (elevated.current) setReport((r) => r && { ...r, findings: r.findings.filter((f) => !list.includes(f)) })
+      if (b.state !== 'applied' || !elevated.current) await load()
     } catch (e) {
       setError(String(e))
     } finally {
