@@ -47,7 +47,8 @@ why = "Locks the i5-7500 at 3.4 GHz instead of 3.8 GHz."
 id = "audit.game-mode"
 title = "Game Mode disabled"
 target = { kind = "registry", hive = "HKCU", path = 'Software\Microsoft\GameBar', name = "AutoGameModeEnabled" }
-default = "not set"
+# Unset means on; only 0 (off) is a leftover.
+default = 1
 verdict = "conflict"
 sources = ["Stix Tweaks"]
 why = "Without Game Mode, Windows Update and driver installs can run mid-game."

@@ -14,7 +14,7 @@ const END_ENUMERATION: i32 = -7;
 const SETTING_NOT_FOUND: i32 = -160;
 const PROFILE_NOT_FOUND: i32 = -163;
 
-#[repr(C, align(8))]
+#[repr(C)]
 #[derive(Clone, Copy)]
 struct Raw([u8; 4100]);
 
@@ -55,7 +55,9 @@ struct App {
     bits: u32,
 }
 
-const _: () = assert!(size_of::<Setting>() == 12328);
+const _: () = assert!(size_of::<Setting>() == 12320);
+// sizeof(NVDRS_SETTING_V1) in nvapi.h; a wrong size makes DRS_GetSetting return -9.
+const _: () = assert!(size_of::<Profile>() == 4116 && size_of::<App>() == 16396);
 const SETTING_V1: u32 = size_of::<Setting>() as u32 | (1 << 16);
 const PROFILE_V1: u32 = size_of::<Profile>() as u32 | (1 << 16);
 const APP_V3: u32 = size_of::<App>() as u32 | (3 << 16);
