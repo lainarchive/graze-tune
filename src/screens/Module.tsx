@@ -29,10 +29,13 @@ export default function Module({ id }: { id: string }) {
   const [result, setResult] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    const vals = await api.read(tweaks.flatMap((t) => t.changes.map((c) => c.target)))
+    const [vals, batches] = await Promise.all([api.read(tweaks.flatMap((t) => t.changes.map((c) => c.target))), api.history()])
+    // Boot settings can't be read without admin; fall back to the last value graze-tune wrote.
+    const written = new Map<string, Value>()
+    for (const b of batches) if (b.state === 'applied') for (const e of b.entries) written.set(fmtTarget(e.target), e.new)
     let i = 0
     const next: Record<string, (Value | null)[]> = {}
-    for (const t of tweaks) next[t.id] = t.changes.map(() => vals[i++])
+    for (const t of tweaks) next[t.id] = t.changes.map((c) => vals[i++] ?? (c.target.kind === 'bcd' ? written.get(fmtTarget(c.target)) ?? null : null))
     setCurrent(next)
     setWant({})
   }, [tweaks])
