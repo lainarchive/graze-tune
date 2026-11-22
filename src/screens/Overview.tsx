@@ -6,18 +6,18 @@ import { NumberTicker } from '@/components/ui/number-ticker'
 import { LiveTrace } from '@/components/viz/LiveTrace'
 import { ScoreRing, Spark } from '@/components/viz/ScoreRing'
 import { cn } from '@/lib/utils'
-import { after, before, health, latencyBudget, net, nextSteps, stats, verdictMeta } from '@/data/mock'
+import { after, before, latencyBudget, net, nextSteps, stats, verdictMeta } from '@/data/mock'
 import { api, type SystemInfo, type Verdict } from '@/lib/api'
+import { usePcHealth } from '@/lib/use-health'
 
 const verdictColor: Record<Verdict, string> = { harmful: 'var(--bad)', conflict: 'var(--warn)', risk: 'color-mix(in oklab, var(--warn) 60%, var(--muted))', placebo: 'var(--muted-foreground)', keep: 'var(--good)' }
 
 export default function Overview({ go }: { go: (s: string) => void }) {
   const [run, setRun] = useState<'before' | 'after'>('after')
   const [sys, setSys] = useState<SystemInfo | null>(null)
-  const [findings, setFindings] = useState<{ verdict: Verdict }[]>([])
+  const { findings, health } = usePcHealth()
   useEffect(() => {
     api.systemInfo().then(setSys)
-    api.audit().then((r) => setFindings(r.findings))
   }, [])
   const data = run === 'after' ? after : before
   const s = stats(data)
@@ -40,16 +40,17 @@ export default function Overview({ go }: { go: (s: string) => void }) {
 
       <div className="grid grid-cols-[300px_1fr] gap-5">
         <section className="panel flex flex-col items-center p-5">
-          <ScoreRing value={health.score} label="Latency health" />
-          <div className="-mt-3 w-full space-y-2.5">
-            {health.parts.map((p, i) => (
-              <div key={p.label}>
-                <div className="flex justify-between text-xs"><span className="text-muted-foreground">{p.label}</span><span className="tabular-nums">{p.value}</span></div>
+          <ScoreRing value={health?.score ?? 0} label="PC health" />
+          <div className="-mt-3 w-full space-y-1">
+            {health?.parts.map((p, i) => (
+              <button key={p.label} onClick={() => go(p.go)} className="group block w-full rounded-md px-2 py-1.5 text-left transition-colors hover:bg-primary/5">
+                <div className="flex justify-between text-xs"><span className="text-muted-foreground group-hover:text-foreground">{p.label}</span><span className="tabular-nums">{p.value}</span></div>
                 <div className="mt-1 h-1 rounded-full bg-muted">
                   <motion.div initial={{ width: 0 }} animate={{ width: `${p.value}%` }} transition={{ duration: 0.9, delay: 0.25 + i * 0.08, ease: [0.22, 1, 0.36, 1] }}
                     className={cn('h-full rounded-full', p.value >= 75 ? 'bg-good' : p.value >= 50 ? 'bg-warn' : 'bg-bad')} />
                 </div>
-              </div>
+                <div className="mt-1 truncate text-[11px] text-muted-foreground">{p.drag}</div>
+              </button>
             ))}
           </div>
         </section>

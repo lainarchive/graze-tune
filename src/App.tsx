@@ -7,7 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { CommandPalette } from '@/components/CommandPalette'
 import { inTauri } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { findings, health } from '@/data/mock'
+import { usePcHealth } from '@/lib/use-health'
 import { moduleNav, primaryNav, type ModuleStatus, type NavEntry } from '@/data/nav'
 import Overview from '@/screens/Overview'
 import Audit from '@/screens/Audit'
@@ -19,7 +19,6 @@ import History from '@/screens/History'
 import Settings from '@/screens/Settings'
 import { isDark, setSettings, useSettings } from '@/lib/settings'
 
-const openFindings = findings.filter((f) => f.verdict !== 'keep').length
 
 function titleOf(screen: string) {
   if (screen.startsWith('module:')) {
@@ -33,6 +32,9 @@ function titleOf(screen: string) {
 
 export default function App() {
   const [screen, setScreen] = useState('overview')
+  const { findings, health } = usePcHealth(screen)
+  const openFindings = findings.filter((f) => f.verdict !== 'keep').length
+  const score = health?.score ?? 0
   const settings = useSettings()
   const dark = isDark(settings)
   const [palette, setPalette] = useState(false)
@@ -92,12 +94,12 @@ export default function App() {
                 <div className="relative size-9 shrink-0">
                   <svg viewBox="0 0 36 36" className="size-9 -rotate-90">
                     <circle cx="18" cy="18" r="15" fill="none" stroke="var(--muted)" strokeWidth="4" />
-                    <circle cx="18" cy="18" r="15" fill="none" stroke="var(--warn)" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${(health.score / 100) * 94.2} 94.2`} />
+                    <circle cx="18" cy="18" r="15" fill="none" stroke={score >= 75 ? 'var(--good)' : score >= 50 ? 'var(--warn)' : 'var(--bad)'} strokeWidth="4" strokeLinecap="round" strokeDasharray={`${(score / 100) * 94.2} 94.2`} />
                   </svg>
-                  <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold tabular-nums">{health.score}</span>
+                  <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold tabular-nums">{health ? score : '–'}</span>
                 </div>
                 <div className="min-w-0 text-xs">
-                  <div className="font-medium">Latency health</div>
+                  <div className="font-medium">PC health</div>
                   <div className="text-muted-foreground">{openFindings} items need a look</div>
                 </div>
               </div>

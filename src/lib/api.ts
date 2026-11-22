@@ -174,14 +174,23 @@ export async function call<T>(cmd: string, args: Record<string, unknown> = {}): 
   return (await mock[cmd](args)) as T
 }
 
+let auditCache: Promise<AuditReport> | null = null
+const changed = <T>(p: Promise<T>) => { auditCache = null; return p }
+
 export const api = {
   systemInfo: () => call<SystemInfo>('system_info'),
-  audit: (elevated = false) => call<AuditReport>('run_audit', { elevated }),
+  audit: (elevated = false) => {
+    const r = call<AuditReport>('run_audit', { elevated })
+    if (!elevated) auditCache = r.catch((e) => { auditCache = null; throw e })
+    return r
+  },
+  /** Shared unelevated audit for the dashboard; dropped whenever a change is applied or reverted. */
+  auditCached: () => (auditCache ??= call<AuditReport>('run_audit', { elevated: false }).catch((e) => { auditCache = null; throw e })),
   read: (targets: Target[]) => call<(Value | null)[]>('read_values', { targets }),
-  apply: (label: string, changes: ChangeIn[], restorePoint: boolean) => call<Batch>('apply', { label, changes, restorePoint }),
+  apply: (label: string, changes: ChangeIn[], restorePoint: boolean) => changed(call<Batch>('apply', { label, changes, restorePoint })),
   history: () => call<Batch[]>('history'),
-  revert: (id: number) => call<string[]>('revert', { id }),
-  revertAll: () => call<string[]>('revert_all'),
+  revert: (id: number) => changed(call<string[]>('revert', { id })),
+  revertAll: () => changed(call<string[]>('revert_all')),
   nvProfiles: () => call<ProfileInfo[]>('nv_profiles'),
   nvSettings: (profile: string | null) => call<DriverSetting[]>('nv_settings', { profile }),
   nvApps: (profile: string) => call<string[]>('nv_apps', { profile }),
