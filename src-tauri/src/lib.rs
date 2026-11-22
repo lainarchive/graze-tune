@@ -292,6 +292,7 @@ async fn bench_frames(app: tauri::AppHandle, process: String, seconds: u32) -> R
         .ok_or("PresentMon.exe is not bundled; add it to resources/")?;
     let csv = std::env::temp_dir().join("graze-tune-presentmon.csv");
     let secs = seconds.clamp(5, 600).to_string();
+    let _ = std::fs::remove_file(&csv);
     let out = tauri::async_runtime::spawn_blocking({
         let csv = csv.clone();
         move || {
@@ -310,6 +311,12 @@ async fn bench_frames(app: tauri::AppHandle, process: String, seconds: u32) -> R
     .await
     .map_err(|e| e.to_string())?
     .map_err(|e| e.to_string())?;
+    if !out.status.success() {
+        return Err(format!(
+            "PresentMon failed: {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        ));
+    }
     let text = std::fs::read_to_string(&csv).map_err(|_| {
         format!(
             "PresentMon produced no data: {}",
