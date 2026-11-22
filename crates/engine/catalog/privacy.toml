@@ -4,8 +4,8 @@
 id = "priv.recall"
 module = "Privacy"
 title = "Turn off Recall snapshots"
-why = "Recall screenshots the desktop every few seconds and runs on-device analysis on them, which costs disk writes and NPU/CPU time during play."
-risk = "safe"
+why = "Recall screenshots the desktop every few seconds and runs on-device analysis on them, which costs disk writes and NPU/CPU time during play. Windows deletes saved snapshots when this applies, and reverting does not bring them back."
+risk = "caution"
 changes = [
   { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\WindowsAI', name = "DisableAIDataAnalysis" }, value = 1, default = "not set" },
   { target = { kind = "registry", hive = "HKLM", path = 'SOFTWARE\Policies\Microsoft\Windows\WindowsAI', name = "AllowRecallEnablement" }, value = 0, default = "not set" },
