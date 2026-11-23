@@ -669,7 +669,11 @@ pub fn run() {
                 let secure = graze_engine::windows::state::state_dir()
                     .map_err(std::io::Error::other)?
                     .join("undo-log.json");
-                let path = if secure.exists() {
+                // A non-admin can pre-create the folder; ignore its log until an admin owns it.
+                let trusted = secure
+                    .parent()
+                    .is_some_and(|d| matches!(graze_engine::windows::state::trusted_dir(d), Ok(true)));
+                let path = if trusted && secure.exists() {
                     secure
                 } else {
                     legacy.clone()
