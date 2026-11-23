@@ -1,5 +1,6 @@
 //! Real Windows backends. Everything here is behind `cfg(windows)`.
 pub mod nvapi;
+pub mod state;
 
 use crate::system::{backend_err, SystemInfo};
 use crate::{Hive, SysError, SysResult, System, Target, Value};

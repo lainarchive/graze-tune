@@ -4,6 +4,8 @@ use graze_engine::stats::{self, FrameStats, PingStats};
 use graze_engine::system::SystemInfo;
 use graze_engine::{Batch, Catalog, Planned, System, Target, UndoLog, Value};
 use serde::{Deserialize, Serialize};
+#[cfg(windows)]
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tauri::Manager;
@@ -16,6 +18,8 @@ type Platform = graze_engine::MemorySystem;
 struct Core {
     sys: Platform,
     log: Mutex<UndoLog>,
+    #[cfg(windows)]
+    legacy: PathBuf,
     catalog: Catalog,
 }
 
@@ -146,11 +150,22 @@ fn privileged<T: serde::de::DeserializeOwned>(core: &Core, op: Op) -> Res<T> {
     let mut log = core.log.lock().map_err(|e| e.to_string())?;
     #[cfg(windows)]
     let out = if graze_engine::windows::is_elevated() {
-        exec_op(&core.sys, &core.catalog, &mut log, op)
+        let (path, legacy, mut elevated_log) = elevated::open_admin_log(&core.legacy)?;
+        let out = exec_op(&core.sys, &core.catalog, &mut elevated_log, op);
+        *log = UndoLog::open(&path).map_err(|e| e.to_string())?;
+        if out.is_ok() {
+            elevated::migrate_legacy(legacy.as_deref())?;
+        }
+        out
     } else {
-        let path = log.path().to_path_buf();
-        let out = elevated::run(&path, &op);
-        *log = UndoLog::open(path).map_err(|e| e.to_string())?;
+        let (path, legacy) = elevated::state_paths(&core.legacy)?;
+        let out = elevated::run(legacy.as_deref(), op);
+        if path.exists() {
+            *log = UndoLog::open(path).map_err(|e| e.to_string())?;
+        }
+        if out.is_ok() {
+            elevated::migrate_legacy(legacy.as_deref())?;
+        }
         out
     };
     #[cfg(not(windows))]
@@ -175,27 +190,31 @@ fn from_hex(s: &str) -> Option<Vec<u8>> {
 #[cfg(windows)]
 mod elevated {
     use super::{to_hex, Op, Res};
+    use graze_engine::UndoLog;
     use std::os::windows::process::CommandExt;
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
     use std::process::Command;
 
     /// Runs `op` in `graze-tune.exe --worker` through a UAC prompt and returns its result.
     /// The request rides on the command line so nothing can swap it while the prompt is open.
     // shortcut: a batch over ~16 KB of JSON exceeds the command-line limit; move to a pipe if that happens.
-    pub fn run(log: &Path, op: &Op) -> Res<serde_json::Value> {
+    pub fn run(legacy: Option<&Path>, op: Op) -> Res<serde_json::Value> {
         let s = |e: std::io::Error| e.to_string();
-        let dir = log.parent().ok_or("undo log has no folder")?;
-        std::fs::create_dir_all(dir).map_err(s)?;
-        let resp = dir.join("worker-response.json");
-        let _ = std::fs::remove_file(&resp);
-        let req = to_hex(&serde_json::to_vec(&(log, op)).map_err(|e| e.to_string())?);
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |duration| duration.as_nanos() as u64)
+            ^ u64::from(std::process::id());
+        let req = to_hex(
+            &serde_json::to_vec(&(legacy.map(Path::to_path_buf), nonce, op))
+                .map_err(|e| e.to_string())?,
+        );
         let exe = std::env::current_exe().map_err(s)?;
+        let resp = graze_engine::windows::state::state_dir()?.join("worker-response.json");
         // PowerShell single-quoted literal holding a double-quoted path, so spaces survive.
         let q = |p: &Path| format!("'\"{}\"'", p.display().to_string().replace('\'', "''"));
         let script = format!(
-            "Start-Process -FilePath {} -ArgumentList '--worker','{req}',{} -Verb RunAs -Wait",
-            q(&exe),
-            q(&resp)
+            "Start-Process -FilePath {} -ArgumentList '--worker','{req}' -Verb RunAs -Wait",
+            q(&exe)
         );
         let out = Command::new("powershell")
             .args(["-NoProfile", "-NonInteractive", "-Command", &script])
@@ -206,42 +225,111 @@ mod elevated {
             return Err("Admin permission was not granted, so nothing was changed.".into());
         }
         let text = std::fs::read(&resp).map_err(|_| "The admin helper exited without a result.")?;
-        let _ = std::fs::remove_file(&resp);
-        serde_json::from_slice::<Res<serde_json::Value>>(&text).map_err(|e| e.to_string())?
+        let (response_nonce, result): (u64, Res<serde_json::Value>) = serde_json::from_slice(&text)
+            .map_err(|_| "The admin helper exited without a result.")?;
+        if response_nonce != nonce {
+            return Err("The admin helper exited without a result.".into());
+        }
+        result
+    }
+
+    pub fn state_paths(legacy_path: &Path) -> Res<(PathBuf, Option<PathBuf>)> {
+        let dir = graze_engine::windows::state::state_dir()?;
+        let path = dir.join("undo-log.json");
+        let secure_log_exists =
+            matches!(graze_engine::windows::state::trusted_dir(&dir), Ok(true)) && path.exists();
+        let legacy = if secure_log_exists || !legacy_path.exists() {
+            None
+        } else {
+            Some(legacy_path.to_path_buf())
+        };
+        Ok((path, legacy))
+    }
+
+    pub fn open_admin_log(legacy_path: &Path) -> Res<(PathBuf, Option<PathBuf>, UndoLog)> {
+        let dir = graze_engine::windows::state::secure_state_dir()?;
+        let path = dir.join("undo-log.json");
+        let legacy = legacy_to_import(&path, Some(legacy_path));
+        let log = open_secure_log(&path, legacy.as_deref())?;
+        Ok((path, legacy, log))
+    }
+
+    // shortcut: the first elevated run trusts the old per-user log once to carry history over; drop the import after a few releases.
+    fn legacy_to_import(path: &Path, legacy: Option<&Path>) -> Option<PathBuf> {
+        if path.exists() {
+            None
+        } else {
+            legacy
+                .filter(|legacy| legacy.exists())
+                .map(Path::to_path_buf)
+        }
+    }
+
+    pub(super) fn open_secure_log(path: &Path, legacy: Option<&Path>) -> Res<UndoLog> {
+        let legacy = legacy_to_import(path, legacy);
+        UndoLog::open_or_import(path, legacy.as_deref()).map_err(|e| e.to_string())
+    }
+
+    pub fn migrate_legacy(legacy: Option<&Path>) -> Res<()> {
+        if let Some(legacy) = legacy {
+            let migrated = legacy.with_file_name("undo-log.json.migrated");
+            match std::fs::rename(legacy, migrated) {
+                Ok(()) => {}
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => return Err(e.to_string()),
+            }
+        }
+        Ok(())
     }
 }
 
-/// Entry point for `graze-tune.exe --worker <hex request> <response path>`; returns the exit code.
+/// Entry point for `graze-tune.exe --worker <hex request>`; returns the exit code.
+#[cfg(windows)]
 pub fn worker(args: &[String]) -> i32 {
     use std::io::Write;
-    let [req, resp] = args else {
+    let [req] = args else {
         return 2;
     };
+    let (legacy, nonce, op): (Option<PathBuf>, u64, Op) = match (|| {
+        let text = from_hex(req).ok_or_else(|| "malformed worker request".to_string())?;
+        serde_json::from_slice(&text).map_err(|e| e.to_string())
+    })() {
+        Ok(request) => request,
+        Err(_) => return 2,
+    };
+    let dir = match graze_engine::windows::state::secure_state_dir() {
+        Ok(dir) => dir,
+        Err(_) => return 2,
+    };
+    let path = dir.join("undo-log.json");
     let result = (|| -> Res<serde_json::Value> {
-        let text = from_hex(req).ok_or("malformed worker request")?;
-        let (path, op): (std::path::PathBuf, Op) =
-            serde_json::from_slice(&text).map_err(|e| e.to_string())?;
-        let mut log = UndoLog::open(path).map_err(|e| e.to_string())?;
+        let mut log = elevated::open_secure_log(&path, legacy.as_deref())?;
         let catalog = Catalog::builtin().map_err(|e| e.to_string())?;
         exec_op(&Platform::default(), &catalog, &mut log, op)
     })();
-    // create_new: never write through a link someone planted at the response path.
-    let _ = std::fs::remove_file(resp);
-    let written = serde_json::to_vec(&result)
+    let response = dir.join("worker-response.json");
+    let _ = std::fs::remove_file(&response);
+    let written = serde_json::to_vec(&(nonce, result))
         .map_err(std::io::Error::other)
         .and_then(|b| {
             std::fs::OpenOptions::new()
                 .write(true)
                 .create_new(true)
-                .open(resp)?
+                .open(response)?
                 .write_all(&b)
         });
     i32::from(written.is_err())
 }
 
+#[cfg(not(windows))]
+pub fn worker(_args: &[String]) -> i32 {
+    2
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{from_hex, to_hex};
+    use super::{from_hex, to_hex, Op};
+    use std::path::PathBuf;
 
     #[test]
     fn hex_roundtrip() {
@@ -249,6 +337,21 @@ mod tests {
         assert_eq!(from_hex(&to_hex(&b)), Some(b));
         assert_eq!(from_hex("abc"), None);
         assert_eq!(from_hex("zz"), None);
+    }
+
+    #[test]
+    fn worker_request_roundtrip() -> Result<(), Box<dyn std::error::Error>> {
+        let legacy = PathBuf::from(r"C:\Users\test\AppData\undo-log.json");
+        let request = (Some(legacy.clone()), 42, Op::RevertAll);
+        let bytes = serde_json::to_vec(&request)?;
+        let decoded = from_hex(&to_hex(&bytes)).ok_or("invalid hex")?;
+        let (decoded_legacy, nonce, op): (Option<PathBuf>, u64, Op) =
+            serde_json::from_slice(&decoded)?;
+
+        assert_eq!(decoded_legacy, Some(legacy));
+        assert_eq!(nonce, 42);
+        assert!(matches!(op, Op::RevertAll));
+        Ok(())
     }
 }
 
@@ -530,12 +633,28 @@ pub fn run() {
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let dir = app.path().app_data_dir()?;
-            let log = UndoLog::open(dir.join("undo-log.json"))?;
+            #[cfg(windows)]
+            let (path, legacy) = {
+                let legacy = app.path().app_data_dir()?.join("undo-log.json");
+                let secure = graze_engine::windows::state::state_dir()
+                    .map_err(std::io::Error::other)?
+                    .join("undo-log.json");
+                let path = if secure.exists() {
+                    secure
+                } else {
+                    legacy.clone()
+                };
+                (path, legacy)
+            };
+            #[cfg(not(windows))]
+            let path = app.path().app_data_dir()?.join("undo-log.json");
+            let log = UndoLog::open(path)?;
             let catalog = Catalog::builtin()?;
             app.manage(Arc::new(Core {
                 sys: Platform::default(),
                 log: Mutex::new(log),
+                #[cfg(windows)]
+                legacy,
                 catalog,
             }));
             Ok(())
