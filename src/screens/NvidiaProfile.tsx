@@ -178,7 +178,7 @@ export default function NvidiaProfile() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={robRun} disabled={busy} title="Game profile for ROB RUN.exe: performance texture filtering, Low Latency On, max performance. If FPS drops when you move the mouse, lower your mouse polling rate.">ROB RUN profile</Button>
+          <Button variant="outline" onClick={robRun} disabled={busy || changes.length > 0} title="Game profile for ROB RUN.exe: performance texture filtering, Low Latency On, max performance. If FPS drops when you move the mouse, lower your mouse polling rate.">ROB RUN profile</Button>
           <Button variant="outline" className="gap-2" onClick={importNip} disabled={busy}><Upload className="size-4" />Import .nip</Button>
           <Button variant="outline" className="gap-2" onClick={exportNip}><Download className="size-4" />Export .nip</Button>
         </div>
