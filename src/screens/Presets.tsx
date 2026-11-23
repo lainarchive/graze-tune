@@ -12,8 +12,9 @@ const riskMeta = {
   'opt-in': { label: 'Security tradeoff', tone: 'text-bad' },
 }
 
+// Applying aborts on any unreadable target, so one missing part makes the whole tweak unavailable.
 const unreadable = (t: Tweak, current?: (Value | null)[]) =>
-  !!current?.every((v) => v === null) && !t.changes.every((c) => c.target.kind === 'bcd')
+  !!current && t.changes.some((c, i) => current[i] === null && c.target.kind !== 'bcd')
 
 export default function Presets() {
   const settings = useSettings()
