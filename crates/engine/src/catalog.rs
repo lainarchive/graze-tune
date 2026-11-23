@@ -77,11 +77,21 @@ pub struct AuditRule {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Preset {
+    pub id: String,
+    pub title: String,
+    pub summary: String,
+    pub tweaks: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Catalog {
     #[serde(default, rename = "tweak")]
     pub tweaks: Vec<Tweak>,
     #[serde(default, rename = "audit")]
     pub audit: Vec<AuditRule>,
+    #[serde(default, rename = "preset")]
+    pub presets: Vec<Preset>,
 }
 
 const SOURCES: &[&str] = &[
@@ -98,6 +108,7 @@ const SOURCES: &[&str] = &[
     include_str!("../catalog/security.toml"),
     include_str!("../catalog/privacy.toml"),
     include_str!("../catalog/audit.toml"),
+    include_str!("../catalog/presets.toml"),
 ];
 
 #[derive(Debug, thiserror::Error)]
@@ -112,12 +123,14 @@ impl Catalog {
         let mut all = Catalog {
             tweaks: vec![],
             audit: vec![],
+            presets: vec![],
         };
         for (index, src) in SOURCES.iter().enumerate() {
             let c: Catalog =
                 toml::from_str(src).map_err(|source| CatalogError { index, source })?;
             all.tweaks.extend(c.tweaks);
             all.audit.extend(c.audit);
+            all.presets.extend(c.presets);
         }
         Ok(all)
     }
@@ -147,6 +160,37 @@ mod tests {
         }
         for a in &c.audit {
             assert!(seen.insert(a.id.clone()), "duplicate audit id {}", a.id);
+        }
+    }
+
+    #[test]
+    fn presets_reference_known_tweaks() {
+        let c = Catalog::builtin().map_err(|e| e.to_string());
+        let c = match c {
+            Ok(c) => c,
+            Err(e) => panic!("{e}"),
+        };
+        assert!(c.presets.len() >= 6, "only {} presets", c.presets.len());
+        let mut preset_ids = HashSet::new();
+        for preset in &c.presets {
+            assert!(
+                preset_ids.insert(preset.id.clone()),
+                "duplicate preset id {}",
+                preset.id
+            );
+            let mut tweak_ids = HashSet::new();
+            for id in &preset.tweaks {
+                assert!(tweak_ids.insert(id), "duplicate tweak id {id} in {}", preset.id);
+                let tweak = c
+                    .tweak(id)
+                    .unwrap_or_else(|| panic!("unknown tweak id {id} in {}", preset.id));
+                assert_ne!(
+                    tweak.risk,
+                    Risk::OptIn,
+                    "opt-in tweak {id} in {}",
+                    preset.id
+                );
+            }
         }
     }
 }
