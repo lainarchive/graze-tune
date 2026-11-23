@@ -43,6 +43,15 @@ const sections: { title: string; rows: Row[] }[] = [
   ] },
 ]
 
+// Kefir's ROB RUN (Unity). Driver-side gains are small; Kefir's own fix for mouse-move FPS drops is a lower polling rate.
+const ROB_RUN: [number, number][] = [
+  [0x00ce2691, 0x14], // texture filtering: high performance
+  [0x00e73211, 1], // anisotropic sample optimization
+  [0x002ecaf2, 1], // trilinear optimization
+  [0x0005f543, 1], [0x10835000, 0], [0x007ba09e, 1], // Low Latency Mode: On
+  [0x1057eb71, 1], // prefer maximum performance
+]
+
 const DEFAULT = 'default'
 const hex = (n: number) => `0x${n.toString(16).toUpperCase().padStart(8, '0')}`
 
@@ -131,6 +140,15 @@ export default function NvidiaProfile() {
       setMsg({ tone: 'bad', text: String(e) })
     }
   }
+  const robRun = async () => {
+    try {
+      await api.nvAddApp('ROB RUN', 'ROB RUN.exe')
+      await apply('NVIDIA ROB RUN profile', ROB_RUN.map(([setting, v]) => ({ target: { kind: 'nvidia', profile: 'ROB RUN', setting }, value: dword(v) })))
+      setProfile('ROB RUN')
+    } catch (e) {
+      setMsg({ tone: 'bad', text: String(e) })
+    }
+  }
   const addExe = async () => {
     const name = exe.trim()
     if (!name) return
@@ -158,6 +176,7 @@ export default function NvidiaProfile() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={robRun} disabled={busy} title="Game profile for ROB RUN.exe: performance texture filtering, Low Latency On, max performance. If FPS drops when you move the mouse, lower your mouse polling rate.">ROB RUN profile</Button>
           <Button variant="outline" className="gap-2" onClick={importNip} disabled={busy}><Upload className="size-4" />Import .nip</Button>
           <Button variant="outline" className="gap-2" onClick={exportNip}><Download className="size-4" />Export .nip</Button>
         </div>
