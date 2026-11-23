@@ -142,9 +142,11 @@ export default function NvidiaProfile() {
   }
   const robRun = async () => {
     try {
-      await api.nvAddApp('ROB RUN', 'ROB RUN.exe')
-      await apply('NVIDIA ROB RUN profile', ROB_RUN.map(([setting, v]) => ({ target: { kind: 'nvidia', profile: 'ROB RUN', setting }, value: dword(v) })))
-      setProfile('ROB RUN')
+      const owner = await api.nvAppProfile('ROB RUN.exe')
+      const target = owner ?? 'ROB RUN'
+      if (!owner) await api.nvAddApp(target, 'ROB RUN.exe')
+      await apply('NVIDIA ROB RUN profile', ROB_RUN.map(([setting, v]) => ({ target: { kind: 'nvidia', profile: target, setting }, value: dword(v) })))
+      setProfile(target)
     } catch (e) {
       setMsg({ tone: 'bad', text: String(e) })
     }
