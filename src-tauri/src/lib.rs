@@ -210,7 +210,17 @@ mod elevated {
         let exe = std::env::current_exe().map_err(s)?;
         let resp = graze_engine::windows::state::state_dir()?.join("worker-response.json");
         // PowerShell single-quoted literal holding a double-quoted path, so spaces survive.
-        let q = |p: &Path| format!("'\"{}\"'", p.display().to_string().replace('\'', "''"));
+        // PowerShell also treats curly single quotes as delimiters; doubling escapes each one.
+        let q = |p: &Path| {
+            let mut s = String::new();
+            for c in p.display().to_string().chars() {
+                if matches!(c, '\'' | '\u{2018}' | '\u{2019}' | '\u{201A}' | '\u{201B}') {
+                    s.push(c);
+                }
+                s.push(c);
+            }
+            format!("'\"{s}\"'")
+        };
         let script = format!(
             "Start-Process -FilePath {} -ArgumentList '--worker','{req}' -Verb RunAs -Wait",
             q(&exe)
