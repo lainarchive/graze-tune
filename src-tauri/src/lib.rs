@@ -4,7 +4,6 @@ use graze_engine::stats::{self, FrameStats, PingStats};
 use graze_engine::system::SystemInfo;
 use graze_engine::{Batch, Catalog, Planned, System, Target, UndoLog, Value};
 use serde::{Deserialize, Serialize};
-#[cfg(windows)]
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -322,8 +321,29 @@ pub fn worker(args: &[String]) -> i32 {
 }
 
 #[cfg(not(windows))]
-pub fn worker(_args: &[String]) -> i32 {
-    2
+pub fn worker(args: &[String]) -> i32 {
+    use std::io::Write;
+    let [req, response] = args else {
+        return 2;
+    };
+    let result = (|| -> Res<serde_json::Value> {
+        let text = from_hex(req).ok_or("malformed worker request")?;
+        let (path, op): (PathBuf, Op) = serde_json::from_slice(&text).map_err(|e| e.to_string())?;
+        let mut log = UndoLog::open(path).map_err(|e| e.to_string())?;
+        let catalog = Catalog::builtin().map_err(|e| e.to_string())?;
+        exec_op(&Platform::default(), &catalog, &mut log, op)
+    })();
+    let _ = std::fs::remove_file(response);
+    let written = serde_json::to_vec(&result)
+        .map_err(std::io::Error::other)
+        .and_then(|bytes| {
+            std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(response)?
+                .write_all(&bytes)
+        });
+    i32::from(written.is_err())
 }
 
 #[cfg(test)]
