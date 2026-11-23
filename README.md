@@ -12,11 +12,13 @@ Graze Tune is a Windows app for checking gaming-related settings, trying a chang
 
 - Run a read-only audit of settings such as the registry, power plans, scheduled tasks and NVIDIA profiles.
 - Apply individual tweaks or presets. Graze Tune records previous values for the changes it applies; use **Changes** to revert them.
-- Compare runs using frametimes, TCP latency and jitter, or timer resolution. Frametime capture requires the Intel PresentMon 2.x console build.
+- Compare runs using frametimes, TCP latency and jitter, or timer resolution.
 
 ## Install
 
 Download the setup `.exe` from [Releases](https://github.com/lainarchive/graze-tune/releases) when a Windows installer is available. Installed copies can check for updates under **Settings → Updates**. If no installer is listed, build from source below.
+
+The release installer doesn't include PresentMon. For frametime capture, build from source with the Intel PresentMon 2.x console executable.
 
 ## Build from source
 
