@@ -148,6 +148,15 @@ fn exec_op(
 fn privileged<T: serde::de::DeserializeOwned>(core: &Core, op: Op) -> Res<T> {
     let mut log = core.log.lock().map_err(|e| e.to_string())?;
     #[cfg(windows)]
+    if matches!(op, Op::Revert { .. } | Op::RevertAll) {
+        // Batch IDs belong to the log the UI listed; if the shared log replaced it, show that one first.
+        let (path, legacy) = elevated::state_paths(&core.legacy)?;
+        if legacy.is_none() && path.exists() && log.path() != path {
+            *log = UndoLog::open(path).map_err(|e| e.to_string())?;
+            return Err("Your change history moved. Check Changes again, then retry.".into());
+        }
+    }
+    #[cfg(windows)]
     let out = if graze_engine::windows::is_elevated() {
         let (path, legacy, mut elevated_log) = elevated::open_admin_log(&core.legacy)?;
         let out = exec_op(&core.sys, &core.catalog, &mut elevated_log, op);
