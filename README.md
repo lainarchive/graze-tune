@@ -1,5 +1,7 @@
 # Graze Tune
 
+![la.01: Graze Tune, a bent strip of silver on black](docs/cover.png)
+
 Graze Tune is a Windows app for checking gaming-related settings, trying a change, and measuring what it did. Start with a baseline before changing anything.
 
 [Windows releases](https://github.com/lainarchive/graze-tune/releases) · [Build from source](#build-from-source)
