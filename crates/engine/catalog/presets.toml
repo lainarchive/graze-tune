@@ -5,7 +5,7 @@
 [[preset]]
 id = "competitive-fps"
 title = "Competitive FPS"
-summary = "Highest and steadiest frame rate on a desktop or a plugged-in laptop. CPU and GPU stay at full clocks, background apps get out of the way, and V-Sync is forced off."
+summary = "Full clocks, lower input and network lag, NVIDIA Low Latency On, and less background work."
 tweaks = [
   "cpu.priority-separation", "cpu.core-parking", "cpu.min-state", "cpu.boost-aggressive",
   "cpu.games-priority", "cpu.games-io-priority", "cpu.system-responsiveness", "cpu.power-throttling",
@@ -20,6 +20,18 @@ tweaks = [
   "win.game-mode", "win.game-dvr", "win.notifications", "win.transparency",
   "input.mouse-accel", "input.usb-suspend", "input.sticky-keys", "input.toggle-keys",
   "audio.ducking", "net.throttling-index",
+  "timers.no-platform-clock", "timers.no-platform-tick", "timers.tsc-sync", "timers.global-resolution",
+  "nv.low-latency-on", "input.mouse-queue", "input.keyboard-repeat",
+  "win.menu-delay", "win.hover-delay", "win.min-animate",
+  "net.nic-eee", "net.nic-flow-control", "net.nic-power-saving", "net.realtek-green",
+  "net.nic-lso", "net.nic-rsc", "net.nic-wake", "net.qos-reserve",
+  "net.delivery-optimization", "net.smart-name-resolution", "net.dns-negative-cache", "net.llmnr",
+  "net.tcp-time-wait", "net.ipv6-transition",
+  "bg.telemetry", "bg.diagtrack", "bg.compat-appraiser", "bg.ceip-tasks",
+  "bg.app-experience-tasks", "bg.feedback-tasks", "bg.disk-diagnostic",
+  "svc.maps-broker", "svc.trkwks", "svc.pcasvc", "svc.alljoyn",
+  "svc.retail-demo", "svc.fax", "win.widgets", "reg.startup-delay",
+  "priv.copilot", "priv.silent-app-installs", "priv.maps-updates",
 ]
 
 [[preset]]

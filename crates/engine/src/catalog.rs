@@ -179,6 +179,7 @@ mod tests {
                 preset.id
             );
             let mut tweak_ids = HashSet::new();
+            let mut targets = HashSet::new();
             for id in &preset.tweaks {
                 assert!(tweak_ids.insert(id), "duplicate tweak id {id} in {}", preset.id);
                 let tweak = c
@@ -190,6 +191,14 @@ mod tests {
                     "opt-in tweak {id} in {}",
                     preset.id
                 );
+                for change in &tweak.changes {
+                    let target = format!("{:?}", change.target);
+                    assert!(
+                        targets.insert(target.clone()),
+                        "duplicate target in preset {}: {target}",
+                        preset.id
+                    );
+                }
             }
         }
     }
