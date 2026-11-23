@@ -1,43 +1,52 @@
-# graze-tune
+# Graze Tune
 
-A Windows gaming and latency optimizer. It audits what other tweak tools left behind, applies tweaks with a full undo log, and lets you benchmark before and after.
+![la.01: Graze Tune, a bent strip of silver on black](docs/cover.png)
 
-- **Audit first.** Reads registry, services, boot config, power plan, scheduled tasks and NVIDIA driver profiles, and flags leftovers from OptimizerDuck, EXM, Stix, Paragon and others as harmful, conflicting, placebo or worth keeping. Nothing is written until you choose an action.
-- **Every change is reversible.** Old values are written to a write-ahead undo log (`%APPDATA%\dev.lainarchive.grazetune\undo-log.json`) before anything changes, a restore point is made per batch, and Changes has a one-click revert of everything.
-- **Modules:** CPU & scheduler, timers, interrupts & MSI mode, memory, storage, NVIDIA driver profiles (Profile Inspector-style, with .nip import/export), NVIDIA hardware, display path, input, audio, network, services, background, Windows UI, privacy, security tradeoffs (opt-in), BIOS guide.
-- **Benchmarks:** PresentMon frametimes (avg, 1% and 0.1% lows), TCP ping and jitter, timer resolution.
-- **No drivers.** No kernel drivers, memory patching or anything anti-cheat could object to.
+Graze Tune is a Windows app for checking gaming-related settings, trying a change, and measuring what it did. Start with a baseline before changing anything.
 
-## Layout
+[Windows releases](https://github.com/lainarchive/graze-tune/releases) · [Build from source](#build-from-source)
 
-| Path | What |
-| --- | --- |
-| `crates/engine` | Rust engine: tweak catalog (`catalog/*.toml`), undo log, audit, .nip parser, benchmark math, Windows backends (`src/windows`) |
-| `src-tauri` | Tauri 2 shell and commands; runs elevated |
-| `src` | React + shadcn/ui frontend. In a normal browser it runs against an in-memory sample PC |
+![Graze Tune overview with PC health, benchmark controls and a frametime graph](docs/preview.webp)
 
-## Develop
+*Browser preview with sample data. The numbers shown are not benchmark results.*
+
+## What you can do
+
+- Run a read-only audit of settings such as the registry, power plans, scheduled tasks and NVIDIA profiles.
+- Apply individual tweaks or presets. Graze Tune records previous values for the changes it applies; use **Changes** to revert them.
+- Compare runs using frametimes, TCP latency and jitter, or timer resolution.
+
+## Install
+
+Download the setup `.exe` from [Releases](https://github.com/lainarchive/graze-tune/releases) when a Windows installer is available. Installed copies can check for updates under **Settings → Updates**. If no installer is listed, build from source below.
+
+The release installer doesn't include PresentMon. For frametime capture, build from source with the Intel PresentMon 2.x console executable.
+
+## Build from source
+
+On Windows, install Node.js 22 and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/#windows). From the repository root:
 
 ```sh
-npm install
-npm run dev                 # browser preview with sample data
-npx tauri dev               # real app (Windows, elevated terminal)
-cargo test --workspace
-npx tauri build --config src-tauri/tauri.unsigned.conf.json   # unsigned NSIS installer in target/release/bundle/nsis
+npm ci
+npx tauri build --config src-tauri/tauri.unsigned.conf.json
 ```
 
-## Releases and updates
+This builds a local NSIS installer without updater signatures. Find it in `target/release/bundle/nsis`.
+To include frametime capture, place `PresentMon.exe` in [resources/](resources/) before building.
 
-Bump the version in `src-tauri/tauri.conf.json` and `Cargo.toml`, then push a `vX.Y.Z` tag. The Release workflow publishes the signed installer and `latest.json` to the [Releases page](https://github.com/lainarchive/graze-tune/releases). Installed copies can check for updates from **Settings > Updates**. The repository needs the `TAURI_SIGNING_PRIVATE_KEY` Actions secret.
+## Development
 
-Frametime capture needs `PresentMon.exe` (Intel PresentMon 2.x console build) in `resources/`.
+`npm run dev` opens a browser preview with sample data. It doesn't read or change Windows settings. Use `npx tauri dev` on Windows for the desktop app.
 
-After editing `crates/engine/catalog/*.toml`, refresh the browser preview data:
+The Rust engine and tweak catalog live in [crates/engine](crates/engine/), the desktop shell in [src-tauri](src-tauri/), and the React UI in [src](src/).
+After changing the tweak catalog, refresh the preview data:
 
 ```sh
 cargo run -p graze-engine --example export_catalog > src/data/catalog.json
 ```
 
+The [release workflow](.github/workflows/release.yml) runs on `vX.Y.Z` tags and uses the `TAURI_SIGNING_PRIVATE_KEY` Actions secret to sign updates. Bump the version in `Cargo.toml` and `src-tauri/tauri.conf.json` before tagging.
+
 ## Credits
 
-Many catalog entries were picked using [OptimizerDuck](https://github.com/itsfatduck/optimizerDuck) (GPL-3.0) as a reference for which settings to cover. No OptimizerDuck code or text is included; the entries and their descriptions are written for graze-tune.
+[OptimizerDuck](https://github.com/itsfatduck/optimizerDuck) was a reference for which Windows settings to include in the tweak catalog.
