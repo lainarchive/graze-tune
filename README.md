@@ -23,7 +23,7 @@ npm install
 npm run dev                 # browser preview with sample data
 npx tauri dev               # real app (Windows, elevated terminal)
 cargo test --workspace
-npx tauri build             # NSIS installer in target/release/bundle/nsis
+npx tauri build --config '{"bundle":{"createUpdaterArtifacts":false}}'   # unsigned NSIS installer in target/release/bundle/nsis
 ```
 
 ## Releases and updates
