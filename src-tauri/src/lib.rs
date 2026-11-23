@@ -452,6 +452,9 @@ mod nv {
         pub fn add_app(&self, _: &str, _: &str) -> Res<()> {
             Ok(())
         }
+        pub fn app_profile(&self, _: &str) -> Res<Option<String>> {
+            Ok(None)
+        }
     }
 }
 
@@ -486,6 +489,11 @@ async fn nv_apps(core: State<'_>, profile: String) -> Res<Vec<String>> {
 #[tauri::command]
 async fn nv_add_app(core: State<'_>, profile: String, exe: String) -> Res<()> {
     blocking(&core, move |c| nvidia(c, |s| s.add_app(&profile, &exe))).await
+}
+
+#[tauri::command]
+async fn nv_app_profile(core: State<'_>, exe: String) -> Res<Option<String>> {
+    blocking(&core, move |c| nvidia(c, |s| s.app_profile(&exe))).await
 }
 
 #[derive(Serialize)]
@@ -715,6 +723,7 @@ pub fn run() {
             nv_settings,
             nv_apps,
             nv_add_app,
+            nv_app_profile,
             nip_read,
             nip_write,
             bench_ping,

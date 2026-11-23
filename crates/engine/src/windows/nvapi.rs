@@ -13,6 +13,7 @@ const OK: i32 = 0;
 const END_ENUMERATION: i32 = -7;
 const SETTING_NOT_FOUND: i32 = -160;
 const PROFILE_NOT_FOUND: i32 = -163;
+const EXECUTABLE_NOT_FOUND: i32 = -166;
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -158,6 +159,7 @@ fns! {
     enum_profiles = 0xbc371ee0: fn(H, u32, *mut H);
     create_application = 0x4347a9de: fn(H, H, *mut App);
     enum_applications = 0x7fa2173a: fn(H, H, u32, *mut u32, *mut App);
+    find_application_by_name = 0xeee566b2: fn(H, *const u16, *mut H, *mut App);
     set_setting = 0x8a2cf5f5 | 0x577dd202: fn(H, H, *mut Setting, u32, u32);
     get_setting = 0xea99498d | 0x73bf8338: fn(H, H, u32, *mut Setting, *mut u32);
     enum_settings = 0xcfd6983e | 0xae3039da: fn(H, H, u32, *mut u32, *mut Setting);
@@ -412,6 +414,28 @@ impl Session<'_> {
             }
         }
         Ok(out)
+    }
+
+    pub fn app_profile(&self, exe: &str) -> Result<Option<String>, String> {
+        let mut hp: H = std::ptr::null_mut();
+        let mut app = zeroed::<App>();
+        app.version = APP_V3;
+        // SAFETY: valid session; name buffer and output structs live across the call.
+        let status = unsafe {
+            (self.f.find_application_by_name)(self.h, wide(exe).as_ptr(), &mut hp, &mut *app)
+        };
+        if status == EXECUTABLE_NOT_FOUND {
+            return Ok(None);
+        }
+        check(status, "DRS_FindApplicationByName")?;
+        let mut p = zeroed::<Profile>();
+        p.version = PROFILE_V1;
+        // SAFETY: valid handles, struct initialised with its version.
+        check(
+            unsafe { (self.f.get_profile_info)(self.h, hp, &mut *p) },
+            "DRS_GetProfileInfo",
+        )?;
+        Ok(Some(from_wide(&p.name)))
     }
 
     /// Creates `profile` if needed and attaches `exe` to it.

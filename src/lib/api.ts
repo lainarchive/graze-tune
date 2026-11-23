@@ -142,6 +142,7 @@ const mock: Record<string, (a: Record<string, unknown>) => unknown> = {
     return v && v.type !== 'missing' ? { ...s, value: v, user_set: true } : profile ? { ...s, value: s.predefined ?? s.value, user_set: false } : s
   }),
   nv_apps: ({ profile }) => mockApps[profile as string] ?? [],
+  nv_app_profile: () => null,
   nv_add_app: ({ profile, exe }) => {
     const a = (mockApps[profile as string] ??= [])
     if (!a.some((x) => x.toLowerCase() === (exe as string).toLowerCase())) a.push(exe as string)
@@ -197,6 +198,7 @@ export const api = {
   nvSettings: (profile: string | null) => call<DriverSetting[]>('nv_settings', { profile }),
   nvApps: (profile: string) => call<string[]>('nv_apps', { profile }),
   nvAddApp: (profile: string, exe: string) => call<null>('nv_add_app', { profile, exe }),
+  nvAppProfile: (exe: string) => call<string | null>('nv_app_profile', { exe }),
   nipRead: (path: string) => call<{ changes: { target: Target; value: Value }[]; apps: [string, string[]][] }>('nip_read', { path }),
   nipWrite: (path: string, profiles: (string | null)[]) => call<number>('nip_write', { path, profiles }),
   ping: (host: string, port: number, count: number) => call<PingStats>('bench_ping', { host, port, count }),
