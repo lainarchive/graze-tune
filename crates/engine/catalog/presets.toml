@@ -5,7 +5,27 @@
 [[preset]]
 id = "competitive-fps"
 title = "Competitive FPS"
-summary = "Full clocks, lower input and network lag, NVIDIA Low Latency On, and less background work."
+summary = "Highest and steadiest frame rate on a desktop or a plugged-in laptop. CPU and GPU stay at full clocks, background apps get out of the way, and V-Sync is forced off."
+tweaks = [
+  "cpu.priority-separation", "cpu.core-parking", "cpu.min-state", "cpu.boost-aggressive",
+  "cpu.games-priority", "cpu.games-io-priority", "cpu.system-responsiveness", "cpu.power-throttling",
+  "cpu.low-priority-indexer", "cpu.low-priority-compat-telemetry", "cpu.low-priority-update-workers",
+  "cpu.low-priority-onedrive", "cpu.low-priority-gamebar-presence", "cpu.low-priority-phone-link",
+  "nv.power-max", "nv.vsync-off", "nv.shader-cache-unlimited", "nv.texture-performance",
+  "nv.highest-refresh", "nv.cuda-p2-off", "nv.ansel-off", "nvhw.pcie-aspm", "nvhw.telemetry",
+  "gpu.amd-ulps", "gpu.amd-aspm", "gpu.intel-adaptive-vsync",
+  "display.windowed-opt", "display.fso",
+  "storage.ahci-link-power", "storage.nvme-idle", "storage.disk-idle",
+  "mem.edge-background", "mem.chrome-background", "bg.background-apps",
+  "win.game-mode", "win.game-dvr", "win.notifications", "win.transparency",
+  "input.mouse-accel", "input.usb-suspend", "input.sticky-keys", "input.toggle-keys",
+  "audio.ducking", "net.throttling-index",
+]
+
+[[preset]]
+id = "competitive-fps-plus"
+title = "Competitive FPS+"
+summary = "Competitive FPS plus safe timer, input, network and background tweaks, NVIDIA Low Latency On, and the tweaks to check after applying: MSI mode on the GPU and network adapter, NIC interrupt moderation off, shallow CPU idle and the MMCSS boost. Restart, then watch for stutter, crackling audio or a dropped connection."
 tweaks = [
   "cpu.priority-separation", "cpu.core-parking", "cpu.min-state", "cpu.boost-aggressive",
   "cpu.games-priority", "cpu.games-io-priority", "cpu.system-responsiveness", "cpu.power-throttling",
@@ -32,26 +52,8 @@ tweaks = [
   "svc.maps-broker", "svc.trkwks", "svc.pcasvc", "svc.alljoyn",
   "svc.retail-demo", "svc.fax", "win.widgets", "reg.startup-delay",
   "priv.copilot", "priv.silent-app-installs", "priv.maps-updates",
-]
-
-[[preset]]
-id = "low-latency"
-title = "Low latency"
-summary = "Shortest delay from click to screen and from your PC to the server. Adds timer, interrupt and network adapter changes on top of full clocks, so check for stutter or dropped audio after the restart."
-tweaks = [
-  "cpu.priority-separation", "cpu.core-parking", "cpu.idle-promote", "cpu.power-throttling",
-  "cpu.games-priority", "cpu.system-responsiveness", "cpu.mmcss-no-lazy",
-  "timers.no-platform-clock", "timers.no-platform-tick", "timers.tsc-sync", "timers.global-resolution",
-  "irq.gpu-msi", "irq.net-msi",
-  "nv.low-latency-ultra", "nv.vsync-off", "nv.power-max", "nvhw.pcie-aspm",
-  "gpu.amd-ulps", "gpu.amd-aspm",
-  "display.windowed-opt", "display.fso",
-  "input.usb-suspend", "input.mouse-accel", "input.mouse-queue", "input.keyboard-repeat",
-  "input.touchpad-no-delay",
-  "net.throttling-index", "net.nic-interrupt-moderation", "net.nic-eee", "net.nic-flow-control",
-  "net.nic-power-saving", "net.realtek-green",
-  "storage.ahci-link-power", "storage.nvme-idle",
-  "win.game-dvr", "win.menu-delay", "win.hover-delay", "win.min-animate",
+  "cpu.idle-promote", "cpu.mmcss-no-lazy", "irq.gpu-msi", "irq.net-msi",
+  "net.nic-interrupt-moderation",
 ]
 
 [[preset]]
