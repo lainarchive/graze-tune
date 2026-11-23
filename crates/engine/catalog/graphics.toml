@@ -11,6 +11,18 @@ changes = [
 ]
 
 [[tweak]]
+id = "nv.low-latency-on"
+module = "NVIDIA profile"
+title = "Low Latency Mode: On"
+why = "Caps the render queue at one frame. Cuts input lag with little FPS cost; Ultra goes further but can stutter when CPU-bound."
+risk = "safe"
+changes = [
+  { target = { kind = "nvidia", setting = 0x0005F543 }, value = 1, default = 0 },
+  { target = { kind = "nvidia", setting = 0x10835000 }, value = 0, default = 0 },
+  { target = { kind = "nvidia", setting = 0x007BA09E }, value = 1, default = 0 },
+]
+
+[[tweak]]
 id = "nv.vsync-off"
 module = "NVIDIA profile"
 title = "Vertical sync: force off"

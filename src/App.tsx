@@ -11,6 +11,7 @@ import { usePcHealth } from '@/lib/use-health'
 import { moduleNav, primaryNav, type ModuleStatus, type NavEntry } from '@/data/nav'
 import Overview from '@/screens/Overview'
 import Audit from '@/screens/Audit'
+import Presets from '@/screens/Presets'
 import Module from '@/screens/Module'
 import NvidiaProfile from '@/screens/NvidiaProfile'
 import { BiosGuide, GameProfiles, Thermals } from '@/screens/Guides'
@@ -129,6 +130,7 @@ export default function App() {
               >
                 {screen === 'overview' && <Overview go={go} />}
                 {screen === 'audit' && <Audit />}
+                {screen === 'presets' && <Presets />}
                 {screen === 'benchmarks' && <Benchmarks />}
                 {screen === 'history' && <History />}
                 {screen === 'settings' && <Settings />}

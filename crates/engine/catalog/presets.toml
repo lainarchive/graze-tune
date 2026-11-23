@@ -1,0 +1,121 @@
+# Presets are lists of catalog tweak ids applied as one undoable batch.
+# Tweaks that can't be read on a PC (another GPU vendor, no Ethernet) are skipped.
+# Security tradeoffs (risk = "opt-in") stay out of presets; they need their own consent.
+
+[[preset]]
+id = "competitive-fps"
+title = "Competitive FPS"
+summary = "Highest and steadiest frame rate on a desktop or a plugged-in laptop. CPU and GPU stay at full clocks, background apps get out of the way, and V-Sync is forced off."
+tweaks = [
+  "cpu.priority-separation", "cpu.core-parking", "cpu.min-state", "cpu.boost-aggressive",
+  "cpu.games-priority", "cpu.games-io-priority", "cpu.system-responsiveness", "cpu.power-throttling",
+  "cpu.low-priority-indexer", "cpu.low-priority-compat-telemetry", "cpu.low-priority-update-workers",
+  "cpu.low-priority-onedrive", "cpu.low-priority-gamebar-presence", "cpu.low-priority-phone-link",
+  "nv.power-max", "nv.vsync-off", "nv.shader-cache-unlimited", "nv.texture-performance",
+  "nv.highest-refresh", "nv.cuda-p2-off", "nv.ansel-off", "nvhw.pcie-aspm", "nvhw.telemetry",
+  "gpu.amd-ulps", "gpu.amd-aspm", "gpu.intel-adaptive-vsync",
+  "display.windowed-opt", "display.fso",
+  "storage.ahci-link-power", "storage.nvme-idle", "storage.disk-idle",
+  "mem.edge-background", "mem.chrome-background", "bg.background-apps",
+  "win.game-mode", "win.game-dvr", "win.notifications", "win.transparency",
+  "input.mouse-accel", "input.usb-suspend", "input.sticky-keys", "input.toggle-keys",
+  "audio.ducking", "net.throttling-index",
+]
+
+[[preset]]
+id = "competitive-fps-plus"
+title = "Competitive FPS+"
+summary = "Competitive FPS plus safe timer, input, network and background tweaks, NVIDIA Low Latency On, and the tweaks to check after applying: MSI mode on the GPU and network adapter, NIC interrupt moderation off, shallow CPU idle and the MMCSS boost. Restart, then watch for stutter, crackling audio or a dropped connection."
+tweaks = [
+  "cpu.priority-separation", "cpu.core-parking", "cpu.min-state", "cpu.boost-aggressive",
+  "cpu.games-priority", "cpu.games-io-priority", "cpu.system-responsiveness", "cpu.power-throttling",
+  "cpu.low-priority-indexer", "cpu.low-priority-compat-telemetry", "cpu.low-priority-update-workers",
+  "cpu.low-priority-onedrive", "cpu.low-priority-gamebar-presence", "cpu.low-priority-phone-link",
+  "nv.power-max", "nv.vsync-off", "nv.shader-cache-unlimited", "nv.texture-performance",
+  "nv.highest-refresh", "nv.cuda-p2-off", "nv.ansel-off", "nvhw.pcie-aspm", "nvhw.telemetry",
+  "gpu.amd-ulps", "gpu.amd-aspm", "gpu.intel-adaptive-vsync",
+  "display.windowed-opt", "display.fso",
+  "storage.ahci-link-power", "storage.nvme-idle", "storage.disk-idle",
+  "mem.edge-background", "mem.chrome-background", "bg.background-apps",
+  "win.game-mode", "win.game-dvr", "win.notifications", "win.transparency",
+  "input.mouse-accel", "input.usb-suspend", "input.sticky-keys", "input.toggle-keys",
+  "audio.ducking", "net.throttling-index",
+  "timers.no-platform-clock", "timers.no-platform-tick", "timers.tsc-sync", "timers.global-resolution",
+  "nv.low-latency-on", "input.mouse-queue", "input.keyboard-repeat",
+  "win.menu-delay", "win.hover-delay", "win.min-animate",
+  "net.nic-eee", "net.nic-flow-control", "net.nic-power-saving", "net.realtek-green",
+  "net.nic-lso", "net.nic-rsc", "net.nic-wake", "net.qos-reserve",
+  "net.delivery-optimization", "net.smart-name-resolution", "net.dns-negative-cache", "net.llmnr",
+  "net.tcp-time-wait", "net.ipv6-transition",
+  "bg.telemetry", "bg.diagtrack", "bg.compat-appraiser", "bg.ceip-tasks",
+  "bg.app-experience-tasks", "bg.feedback-tasks", "bg.disk-diagnostic",
+  "svc.maps-broker", "svc.trkwks", "svc.pcasvc", "svc.alljoyn",
+  "svc.retail-demo", "svc.fax", "win.widgets", "reg.startup-delay",
+  "priv.copilot", "priv.silent-app-installs", "priv.maps-updates",
+  "cpu.idle-promote", "cpu.mmcss-no-lazy", "irq.gpu-msi", "irq.net-msi",
+  "net.nic-interrupt-moderation",
+]
+
+[[preset]]
+id = "balanced"
+title = "Balanced"
+summary = "Safe changes only. Games get scheduler priority and background apps step aside, while power saving, idle states and Windows features stay as they are."
+tweaks = [
+  "cpu.priority-separation", "cpu.games-priority", "cpu.games-io-priority", "cpu.system-responsiveness",
+  "cpu.low-priority-indexer", "cpu.low-priority-compat-telemetry", "cpu.low-priority-update-workers",
+  "cpu.low-priority-onedrive", "cpu.low-priority-gamebar-presence", "cpu.low-priority-phone-link",
+  "timers.no-platform-clock", "timers.no-platform-tick",
+  "nv.shader-cache-unlimited", "display.windowed-opt", "display.fso",
+  "storage.trim", "storage.last-access",
+  "mem.edge-background", "mem.chrome-background", "bg.background-apps", "bg.telemetry",
+  "win.game-mode", "win.game-dvr", "reg.startup-delay",
+  "input.mouse-accel", "input.sticky-keys", "input.toggle-keys",
+  "audio.ducking", "net.throttling-index", "net.delivery-optimization",
+]
+
+[[preset]]
+id = "laptop"
+title = "Laptop gaming"
+summary = "Faster while plugged in, without draining the battery. Power settings change only the AC side, and the CPU still parks cores and idles."
+tweaks = [
+  "cpu.priority-separation", "cpu.games-priority", "cpu.games-io-priority", "cpu.system-responsiveness",
+  "cpu.boost-aggressive",
+  "cpu.low-priority-indexer", "cpu.low-priority-update-workers", "cpu.low-priority-onedrive",
+  "cpu.low-priority-phone-link",
+  "nv.shader-cache-unlimited", "nv.cuda-p2-off", "gpu.intel-adaptive-vsync",
+  "display.windowed-opt", "display.fso", "display.adaptive-brightness",
+  "storage.nvme-idle",
+  "mem.edge-background", "mem.chrome-background", "bg.background-apps",
+  "win.game-mode", "win.game-dvr", "win.notifications",
+  "input.mouse-accel", "input.touchpad-no-delay", "input.sticky-keys",
+  "audio.ducking",
+]
+
+[[preset]]
+id = "online"
+title = "Online & Ethernet"
+summary = "Steadier ping for online games. Turns off adapter power saving and offloads that batch packets, and stops Windows sharing updates or broadcasting on your network."
+tweaks = [
+  "net.throttling-index", "net.nic-interrupt-moderation", "net.nic-eee", "net.nic-flow-control",
+  "net.nic-lso", "net.nic-rsc", "net.nic-power-saving", "net.nic-wake", "net.realtek-green",
+  "net.qos-reserve", "net.delivery-optimization", "net.smart-name-resolution",
+  "net.dns-negative-cache", "net.llmnr", "net.tcp-time-wait", "net.ipv6-transition",
+  "net.smb-throttling", "irq.net-msi",
+]
+
+[[preset]]
+id = "quiet-background"
+title = "Quiet background"
+summary = "Fewer things running behind your game. Cuts telemetry, ads, suggestions and rarely used services, and puts sync and update workers at low priority."
+tweaks = [
+  "bg.telemetry", "bg.diagtrack", "bg.background-apps", "bg.compat-appraiser", "bg.ceip-tasks",
+  "bg.app-experience-tasks", "bg.feedback-tasks", "bg.disk-diagnostic",
+  "svc.maps-broker", "svc.trkwks", "svc.pcasvc", "svc.alljoyn", "svc.retail-demo", "svc.fax",
+  "cpu.low-priority-indexer", "cpu.low-priority-compat-telemetry", "cpu.low-priority-update-workers",
+  "cpu.low-priority-onedrive", "cpu.low-priority-gamebar-presence", "cpu.low-priority-phone-link",
+  "mem.edge-background", "mem.chrome-background", "net.delivery-optimization",
+  "win.widgets", "win.start-web-search", "win.start-recommendations", "reg.startup-delay",
+  "priv.copilot", "priv.advertising-id", "priv.tailored-experiences", "priv.silent-app-installs",
+  "priv.suggestions", "priv.account-nags", "priv.activity-history", "priv.maps-updates",
+  "priv.typing-data", "priv.feedback-prompts", "priv.app-launch-tracking",
+]

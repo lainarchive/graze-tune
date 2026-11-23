@@ -21,7 +21,8 @@ export type Risk = 'safe' | 'caution' | 'opt-in'
 export type Verdict = 'harmful' | 'conflict' | 'placebo' | 'keep' | 'risk'
 export interface Change { target: Target; value: Value; default: Value }
 export interface Tweak { id: string; module: string; title: string; why: string; risk: Risk; restart: boolean; changes: Change[] }
-export interface Catalog { tweak: Tweak[]; audit: unknown[] }
+export interface Preset { id: string; title: string; summary: string; tweaks: string[] }
+export interface Catalog { tweak: Tweak[]; audit: unknown[]; preset: Preset[] }
 export interface Finding { id: string; title: string; target: Target; location: string; current: Value; windows_default: Value; verdict: Verdict; sources: string[]; why: string; ours: boolean }
 export interface AuditReport { checked: number; findings: Finding[]; errors: string[] }
 export interface Entry { target: Target; old: Value; new: Value; tweak: string | null }
@@ -65,6 +66,7 @@ export function fmtTarget(t: Target): string {
 }
 
 export const sameValue = (a: Value | null | undefined, b: Value | null | undefined) => JSON.stringify(a) === JSON.stringify(b)
+export const isOn = (t: Tweak, current?: (Value | null)[]) => !!current && t.changes.every((c, i) => sameValue(current[i], c.value))
 const key = (t: Target) => JSON.stringify({ ...t, profile: t.kind === 'nvidia' ? (t.profile ?? null) : undefined })
 
 // Browser preview: an in-memory PC seeded with leftovers like the ones on the target machine.
@@ -200,4 +202,15 @@ export const api = {
   ping: (host: string, port: number, count: number) => call<PingStats>('bench_ping', { host, port, count }),
   frames: (process: string, seconds: number) => call<{ stats: FrameStats; frametimes: number[] }>('bench_frames', { process, seconds }),
   timer: (requestMax?: boolean) => call<Timer | null>('timer_resolution', { requestMax }),
+}
+
+export async function readCurrent(tweaks: Tweak[]): Promise<Record<string, (Value | null)[]>> {
+  const [vals, batches] = await Promise.all([api.read(tweaks.flatMap((t) => t.changes.map((c) => c.target))), api.history()])
+  // Boot settings can't be read without admin; fall back to the last value graze-tune wrote.
+  const written = new Map<string, Value>()
+  for (const b of batches) if (b.state === 'applied') for (const e of b.entries) written.set(fmtTarget(e.target), e.new)
+  let i = 0
+  const current: Record<string, (Value | null)[]> = {}
+  for (const t of tweaks) current[t.id] = t.changes.map((c) => vals[i++] ?? (c.target.kind === 'bcd' ? written.get(fmtTarget(c.target)) ?? null : null))
+  return current
 }

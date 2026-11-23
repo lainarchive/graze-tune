@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
-import { api, catalog, fmtTarget, fmtValue, sameValue, type Tweak, type Value } from '@/lib/api'
+import { api, catalog, fmtTarget, fmtValue, isOn, readCurrent, type Tweak, type Value } from '@/lib/api'
 import { useSettings } from '@/lib/settings'
 import { moduleNav } from '@/data/nav'
 
@@ -13,8 +13,6 @@ const riskMeta = {
   caution: { label: 'Check after applying', tone: 'text-warn' },
   'opt-in': { label: 'Security tradeoff', tone: 'text-bad' },
 }
-
-const isOn = (t: Tweak, cur?: (Value | null)[]) => !!cur && t.changes.every((c, i) => sameValue(cur[i], c.value))
 
 export default function Module({ id }: { id: string }) {
   const entry = moduleNav.flatMap((g) => g.items).find((m) => m.id === id)
@@ -29,14 +27,7 @@ export default function Module({ id }: { id: string }) {
   const [result, setResult] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    const [vals, batches] = await Promise.all([api.read(tweaks.flatMap((t) => t.changes.map((c) => c.target))), api.history()])
-    // Boot settings can't be read without admin; fall back to the last value graze-tune wrote.
-    const written = new Map<string, Value>()
-    for (const b of batches) if (b.state === 'applied') for (const e of b.entries) written.set(fmtTarget(e.target), e.new)
-    let i = 0
-    const next: Record<string, (Value | null)[]> = {}
-    for (const t of tweaks) next[t.id] = t.changes.map((c) => vals[i++] ?? (c.target.kind === 'bcd' ? written.get(fmtTarget(c.target)) ?? null : null))
-    setCurrent(next)
+    setCurrent(await readCurrent(tweaks))
     setWant({})
   }, [tweaks])
 

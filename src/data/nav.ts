@@ -1,4 +1,4 @@
-import { Activity, AudioLines, CircuitBoard, Cpu, EyeOff, FileCog, Gamepad2, Gauge, HardDrive, History, Layers2, ListChecks, MemoryStick, Monitor, MousePointer2, Network, PanelsTopLeft, ScanSearch, ShieldHalf, SlidersHorizontal, Thermometer, Timer, Waves, Zap, type LucideIcon } from 'lucide-react'
+import { Activity, AudioLines, CircuitBoard, Cpu, EyeOff, FileCog, Gamepad2, Gauge, HardDrive, History, Layers2, ListChecks, MemoryStick, Monitor, MousePointer2, Network, PanelsTopLeft, Rocket, ScanSearch, ShieldHalf, SlidersHorizontal, Thermometer, Timer, Waves, Zap, type LucideIcon } from 'lucide-react'
 
 export type ModuleStatus = 'tuned' | 'pending' | 'issue'
 
@@ -7,6 +7,7 @@ export interface NavEntry { id: string; label: string; icon: LucideIcon; hint?: 
 export const primaryNav: NavEntry[] = [
   { id: 'overview', label: 'Overview', icon: Gauge },
   { id: 'audit', label: 'Audit', icon: ScanSearch },
+  { id: 'presets', label: 'Presets', icon: Rocket },
   { id: 'benchmarks', label: 'Benchmarks', icon: Activity },
   { id: 'history', label: 'Changes', icon: History },
 ]
