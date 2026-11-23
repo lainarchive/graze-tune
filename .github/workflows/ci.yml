@@ -22,8 +22,7 @@ jobs:
       - run: npx tsc -b
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
-      - run: npx tauri build --config '{"bundle":{"createUpdaterArtifacts":false}}'
-        shell: bash
+      - run: npx tauri build --config src-tauri/tauri.unsigned.conf.json
       - uses: actions/upload-artifact@v4
         with:
           name: graze-tune-installer
