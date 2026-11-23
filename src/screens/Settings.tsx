@@ -18,6 +18,7 @@ export default function Settings() {
   useEffect(() => {
     if (inTauri) void import('@tauri-apps/api/app').then(({ getVersion }) => getVersion()).then(setVersion).catch(() => undefined)
   }, [])
+  useEffect(() => () => { void update?.close() }, [update])
 
   const checkForUpdates = async () => {
     if (!inTauri) return
