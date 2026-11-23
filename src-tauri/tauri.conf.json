@@ -25,7 +25,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ0MzcyNjU0RkREQ0Q3QzUKUldURjE5ejlWQ1kzUlBmTThtb01Da1MxSWVIS2tBc1M1NmZmYlFDdG5rY1ROeTBZMTltRlZQdG0K",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ1MDJBNEQ2RUM4RjRERTAKUldUZ1RZL3MxcVFDUlZRR0haa3M1ajVNbHFhNE9LSVRUamRGZjZUc2doMVdpK2V6MUxaT0k1SVAK",
       "endpoints": ["https://github.com/lainarchive/graze-tune/releases/latest/download/latest.json"],
       "windows": { "installMode": "passive" }
     }
