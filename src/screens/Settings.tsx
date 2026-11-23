@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Update } from '@tauri-apps/plugin-updater'
 import { Check, Monitor, Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,11 @@ export default function Settings() {
     if (inTauri) void import('@tauri-apps/api/app').then(({ getVersion }) => getVersion()).then(setVersion).catch(() => undefined)
   }, [])
   useEffect(() => () => { void update?.close() }, [update])
+  const mounted = useRef(true)
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
 
   const checkForUpdates = async () => {
     if (!inTauri) return
@@ -28,6 +33,7 @@ export default function Settings() {
     try {
       const { check } = await import('@tauri-apps/plugin-updater')
       const next = await check()
+      if (!mounted.current) return void next?.close()
       setUpdate(next)
       setUpdateState(next ? 'available' : 'latest')
     } catch (e) {
