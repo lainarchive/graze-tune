@@ -130,15 +130,16 @@ fn value_to_raw(v: &Value) -> Option<(u32, Raw)> {
 }
 
 macro_rules! fns {
-    ($($name:ident = $id:literal : fn($($arg:ty),*);)*) => {
+    ($($name:ident = $id:literal $(| $fallback:literal)? : fn($($arg:ty),*);)*) => {
         struct Fns { $($name: unsafe extern "C" fn($($arg),*) -> i32,)* }
         impl Fns {
             fn load(qi: unsafe extern "C" fn(u32) -> *mut c_void) -> Result<Self, String> {
                 Ok(Self { $($name: {
-                    // SAFETY: nvapi_QueryInterface returns the function for this documented ID.
+                    // SAFETY: nvapi_QueryInterface returns the function for this ID.
                     let p = unsafe { qi($id) };
+                    $(let p = if p.is_null() { unsafe { qi($fallback) } } else { p };)?
                     if p.is_null() { return Err(format!("nvapi is missing {}", stringify!($name))); }
-                    // SAFETY: signature matches nvapi.h for this function ID.
+                    // SAFETY: documented Set/Get fallbacks ignore extra trailing args on x64, as Profile Inspector relies on.
                     unsafe { std::mem::transmute::<*mut c_void, unsafe extern "C" fn($($arg),*) -> i32>(p) }
                 },)* })
             }
@@ -159,9 +160,9 @@ fns! {
     create_application = 0x4347a9de: fn(H, H, *mut App);
     enum_applications = 0x7fa2173a: fn(H, H, u32, *mut u32, *mut App);
     find_application_by_name = 0xeee566b2: fn(H, *const u16, *mut H, *mut App);
-    set_setting = 0x577dd202: fn(H, H, *mut Setting);
-    get_setting = 0x73bf8338: fn(H, H, u32, *mut Setting);
-    enum_settings = 0xae3039da: fn(H, H, u32, *mut u32, *mut Setting);
+    set_setting = 0x8a2cf5f5 | 0x577dd202: fn(H, H, *mut Setting, u32, u32);
+    get_setting = 0xea99498d | 0x73bf8338: fn(H, H, u32, *mut Setting, *mut u32);
+    enum_settings = 0xcfd6983e | 0xae3039da: fn(H, H, u32, *mut u32, *mut Setting);
     delete_profile_setting = 0xe4a26362: fn(H, H, u32);
     get_base_profile = 0xda8466a0: fn(H, *mut H);
 }
@@ -279,8 +280,9 @@ impl Session<'_> {
         };
         let mut s = zeroed::<Setting>();
         s.version = SETTING_V1;
+        let mut x = 0u32;
         // SAFETY: valid handles, struct initialised with its version.
-        match unsafe { (self.f.get_setting)(self.h, hp, id, &mut *s) } {
+        match unsafe { (self.f.get_setting)(self.h, hp, id, &mut *s, &mut x) } {
             OK if s.location == 0 && s.is_current_predefined == 0 => {
                 Ok(raw_to_value(s.kind, &s.current))
             }
@@ -308,7 +310,7 @@ impl Session<'_> {
                 s.current = raw;
                 // SAFETY: valid handles, struct initialised with its version.
                 check(
-                    unsafe { (self.f.set_setting)(self.h, hp, &mut *s) },
+                    unsafe { (self.f.set_setting)(self.h, hp, &mut *s, 0, 0) },
                     "DRS_SetSetting",
                 )
             }
