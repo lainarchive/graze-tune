@@ -144,6 +144,9 @@ export default function NvidiaProfile() {
     try {
       const owner = await api.nvAppProfile('ROB RUN.exe')
       const target = owner ?? 'ROB RUN'
+      const others = (await api.nvApps(target).catch(() => [] as string[])).filter((a) => a.toLowerCase() !== 'rob run.exe')
+      // Profile settings apply to every game in the profile, so never retune games the user didn't pick.
+      if (others.length) return setMsg({ tone: 'bad', text: `Profile "${target}" is also used by ${others.join(', ')}. Move ROB RUN.exe to its own profile first.` })
       if (!owner) await api.nvAddApp(target, 'ROB RUN.exe')
       await apply('NVIDIA ROB RUN profile', ROB_RUN.map(([setting, v]) => ({ target: { kind: 'nvidia', profile: target, setting }, value: dword(v) })))
       setProfile(target)
