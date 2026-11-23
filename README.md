@@ -37,3 +37,4 @@ cargo run -p graze-engine --example export_catalog > src/data/catalog.json
 ## Credits
 
 Many catalog entries were picked using [OptimizerDuck](https://github.com/itsfatduck/optimizerDuck) (GPL-3.0) as a reference for which settings to cover. No OptimizerDuck code or text is included; the entries and their descriptions are written for graze-tune.
+
