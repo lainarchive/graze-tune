@@ -26,6 +26,10 @@ cargo test --workspace
 npx tauri build             # NSIS installer in target/release/bundle/nsis
 ```
 
+## Releases and updates
+
+Bump the version in `src-tauri/tauri.conf.json` and `Cargo.toml`, then push a `vX.Y.Z` tag. The Release workflow publishes the signed installer and `latest.json` to the [Releases page](https://github.com/lainarchive/graze-tune/releases). Installed copies can check for updates from **Settings > Updates**. The repository needs the `TAURI_SIGNING_PRIVATE_KEY` Actions secret.
+
 Frametime capture needs `PresentMon.exe` (Intel PresentMon 2.x console build) in `resources/`.
 
 After editing `crates/engine/catalog/*.toml`, refresh the browser preview data:

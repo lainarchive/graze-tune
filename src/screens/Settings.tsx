@@ -1,11 +1,76 @@
+import { useEffect, useState } from 'react'
+import type { Update } from '@tauri-apps/plugin-updater'
 import { Check, Monitor, Moon, Sun } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { inTauri } from '@/lib/api'
 import { accents, bases, setSettings, useSettings, type Settings as S } from '@/lib/settings'
 
 export default function Settings() {
   const s = useSettings()
+  const [version, setVersion] = useState('')
+  const [update, setUpdate] = useState<Update | null>(null)
+  const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'latest' | 'available' | 'installing' | 'error'>('idle')
+  const [updateMessage, setUpdateMessage] = useState('')
+
+  useEffect(() => {
+    if (inTauri) void import('@tauri-apps/api/app').then(({ getVersion }) => getVersion()).then(setVersion).catch(() => undefined)
+  }, [])
+
+  const checkForUpdates = async () => {
+    if (!inTauri) return
+    setUpdateState('checking')
+    setUpdate(null)
+    setUpdateMessage('')
+    try {
+      const { check } = await import('@tauri-apps/plugin-updater')
+      const next = await check()
+      setUpdate(next)
+      setUpdateState(next ? 'available' : 'latest')
+    } catch (e) {
+      setUpdateMessage(e instanceof Error ? e.message : String(e))
+      setUpdateState('error')
+    }
+  }
+
+  const installUpdate = async () => {
+    if (!update) return
+    setUpdateState('installing')
+    let downloaded = 0
+    let contentLength: number | undefined
+    setUpdateMessage('Downloading…')
+    try {
+      await update.downloadAndInstall((event) => {
+        if (event.event === 'Started') contentLength = event.data.contentLength
+        if (event.event === 'Progress') downloaded += event.data.chunkLength
+        setUpdateMessage(event.event === 'Finished'
+          ? 'Installing update…'
+          : contentLength
+            ? `Downloading… ${Math.round((downloaded / contentLength) * 100)}%`
+            : 'Downloading…')
+      })
+    } catch (e) {
+      setUpdateMessage(e instanceof Error ? e.message : String(e))
+      setUpdateState('error')
+    }
+  }
+
+  const updateDescription = !inTauri
+    ? 'Updates work in the desktop app.'
+    : updateState === 'checking'
+      ? 'Checking for updates…'
+      : updateState === 'latest'
+        ? "You're on the latest version."
+        : updateState === 'available'
+          ? `Version ${update?.version} is available.`
+          : updateState === 'installing'
+            ? updateMessage
+            : updateState === 'error'
+              ? `Update failed: ${updateMessage}`
+              : 'Check for the latest version.'
+
   return (
     <div className="space-y-6">
       <header>
@@ -77,6 +142,18 @@ export default function Settings() {
         </Row>
         <Row title="Start with Windows" desc="Needed for per-game profiles to apply on launch and revert on exit.">
           <Switch checked={s.startWithWindows} onCheckedChange={(v) => setSettings({ startWithWindows: v })} aria-label="Start with Windows" />
+        </Row>
+      </section>
+
+      <section className="panel divide-y px-5">
+        <h2 className="py-4 font-medium">Updates</h2>
+        <Row title={`Graze Tune${version ? ` ${version}` : ''}`} desc={updateDescription}>
+          <Button
+            disabled={!inTauri || updateState === 'checking' || updateState === 'installing'}
+            onClick={updateState === 'available' ? installUpdate : checkForUpdates}
+          >
+            {updateState === 'available' ? 'Update and restart' : updateState === 'checking' ? 'Checking…' : updateState === 'installing' ? 'Updating…' : 'Check for updates'}
+          </Button>
         </Row>
       </section>
     </div>
