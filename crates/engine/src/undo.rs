@@ -77,6 +77,42 @@ impl UndoLog {
         Ok(Self { path, batches })
     }
 
+    pub fn open_or_import(
+        path: impl Into<PathBuf>,
+        legacy: Option<&Path>,
+    ) -> Result<Self, UndoError> {
+        let path = path.into();
+        let secure_exists = match std::fs::symlink_metadata(&path) {
+            Ok(_) => true,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => false,
+            Err(e) => return Err(e.into()),
+        };
+        if secure_exists {
+            return Self::open(path);
+        }
+        let Some(legacy) = legacy else {
+            return Ok(Self {
+                path,
+                batches: vec![],
+            });
+        };
+        let legacy_exists = match std::fs::symlink_metadata(legacy) {
+            Ok(_) => true,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => false,
+            Err(e) => return Err(e.into()),
+        };
+        if !legacy_exists {
+            return Ok(Self {
+                path,
+                batches: vec![],
+            });
+        }
+        let mut log = Self::open(legacy)?;
+        log.path = path;
+        log.save()?;
+        Ok(log)
+    }
+
     pub fn path(&self) -> &Path {
         &self.path
     }
@@ -269,6 +305,53 @@ mod tests {
         let p = std::env::temp_dir().join(format!("graze-undo-{name}-{}.json", std::process::id()));
         let _ = std::fs::remove_file(&p);
         p
+    }
+
+    fn save_batch(path: &Path, label: &str) -> Result<(), UndoError> {
+        let mut log = UndoLog::open(path)?;
+        log.apply(&MemorySystem::default(), label, vec![plan(label, 1)], false)?;
+        Ok(())
+    }
+
+    #[test]
+    fn open_or_import_ignores_legacy_when_secure_log_exists() -> Result<(), UndoError> {
+        let secure = tmp("import-secure");
+        let legacy = tmp("import-secure-legacy");
+        save_batch(&secure, "secure")?;
+        save_batch(&legacy, "legacy")?;
+
+        let log = UndoLog::open_or_import(&secure, Some(&legacy))?;
+
+        assert_eq!(log.batches.len(), 1);
+        assert_eq!(log.batches[0].label, "secure");
+        Ok(())
+    }
+
+    #[test]
+    fn open_or_import_copies_legacy_to_secure_log() -> Result<(), UndoError> {
+        let secure = tmp("import-new-secure");
+        let legacy = tmp("import-new-legacy");
+        save_batch(&legacy, "legacy")?;
+
+        let log = UndoLog::open_or_import(&secure, Some(&legacy))?;
+
+        assert_eq!(log.path(), secure.as_path());
+        assert_eq!(log.batches.len(), 1);
+        assert_eq!(log.batches[0].label, "legacy");
+        let persisted = UndoLog::open(&secure)?;
+        assert_eq!(persisted.batches[0].label, "legacy");
+        Ok(())
+    }
+
+    #[test]
+    fn open_or_import_starts_empty_without_either_log() -> Result<(), UndoError> {
+        let secure = tmp("import-empty");
+
+        let log = UndoLog::open_or_import(&secure, None)?;
+
+        assert!(log.batches.is_empty());
+        assert_eq!(log.path(), secure.as_path());
+        Ok(())
     }
 
     #[test]
